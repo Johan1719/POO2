@@ -1,22 +1,19 @@
 package com.laptitefrance.delivery.controllers;
 
 import com.laptitefrance.delivery.models.Producto;
-import com.laptitefrance.delivery.repositories.ProductoRepository;
+import com.laptitefrance.delivery.services.ProductoService;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ProductoController {
 
-    private final ProductoRepository productoRepo;
+    private final ProductoService productoService;
 
     public ProductoController() {
-        this.productoRepo = new ProductoRepository();
+        this.productoService = new ProductoService();
     }
 
     public List<Producto> obtenerProductosConStock() {
-        return productoRepo.findAll().stream()
-                .filter(p -> p.getStock() > 0)
-                .collect(Collectors.toList());
+        return productoService.obtenerProductosConStock();
     }
 }

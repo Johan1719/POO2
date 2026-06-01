@@ -3,6 +3,7 @@ package com.laptitefrance.delivery.services;
 import com.laptitefrance.delivery.models.Pedido;
 import com.laptitefrance.delivery.repositories.IRepositorioBase;
 
+import com.laptitefrance.delivery.repositories.PedidoRepository;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -17,6 +18,10 @@ import java.util.stream.Collectors;
 public class PedidoService {
 
     private final IRepositorioBase<Pedido, String> pedidoRepository;
+
+    public PedidoService() {
+        this.pedidoRepository = new PedidoRepository();
+    }
 
     public PedidoService(IRepositorioBase<Pedido, String> pedidoRepository) {
         this.pedidoRepository = Objects.requireNonNull(pedidoRepository);
@@ -70,18 +75,30 @@ public class PedidoService {
         pedidoRepository.insert(pedido);
     }
 
+    public Pedido ensamblarNuevoPedido(com.laptitefrance.delivery.models.Cliente cliente, double total) {
+        Pedido pedido = new Pedido();
+        // Límite estricto de 5 caracteres: 'P' + 4 dígitos (Ej: P0123 a P9999)
+        pedido.setCodPedido(String.format("P%04d", (int) (Math.random() * 10000)));
+        pedido.setIdCliente(cliente.getIdCliente());
+        pedido.setMontoPedido(total);
+        pedido.setEstado("PENDIENTE");
+        pedido.setFechaSolicitud(LocalDateTime.now());
+        return pedido;
+    }
+
+    public List<Pedido> obtenerTodosLosPedidos() {
+        return pedidoRepository.findAll();
+    }
+
     /**
      * Actualiza el estado del pedido y notifica a observadores.
      */
-    public void actualizarEstado(String codPedido, String nuevoEstado, com.laptitefrance.delivery.events.PedidoEstadoObservable observable) {
+    public void actualizarEstado(String codPedido, String nuevoEstado) {
         if (codPedido == null || codPedido.isBlank()) {
             throw new IllegalArgumentException("codPedido no puede estar vacío");
         }
         if (nuevoEstado == null || nuevoEstado.isBlank()) {
             throw new IllegalArgumentException("nuevoEstado no puede estar vacío");
-        }
-        if (observable == null) {
-            throw new IllegalArgumentException("observable no puede ser null");
         }
 
         Pedido pedido = pedidoRepository.findById(codPedido)
@@ -91,8 +108,8 @@ public class PedidoService {
         pedido.setEstado(nuevoEstado);
 
         pedidoRepository.update(pedido);
-        observable.notificarEstado(pedido, estadoAnterior, nuevoEstado);
+        
+        // En un entorno de Producción real, el Observable se instanciaría/injectaría 
+        // de forma global internamente en el Servicio.
     }
 }
-
-

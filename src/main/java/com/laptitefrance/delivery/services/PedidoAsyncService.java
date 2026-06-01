@@ -22,17 +22,30 @@ public class PedidoAsyncService {
     /**
      * Guarda un pedido en un hilo secundario.
      *
-     * @param pedido pedido a guardar
+     * @param cliente cliente que realiza el pedido
+     * @param total monto total del pedido
      * @param codEmpleado empleado responsable (para auditoría)
      * @return CompletableFuture que completa cuando finaliza el guardado
      */
-    public CompletableFuture<Void> registrarPedidoAsync(Pedido pedido, String codEmpleado) {
-        Objects.requireNonNull(pedido, "pedido no puede ser null");
-
+    public CompletableFuture<Void> crearPedidoAsync(com.laptitefrance.delivery.models.Cliente cliente, double total, String codEmpleado) {
         return CompletableFuture.runAsync(() -> {
+            Pedido pedido = pedidoService.ensamblarNuevoPedido(cliente, total);
             pedidoService.guardar(pedido);
-            AuditoriaLog.registrarAccion(codEmpleado, "Registró pedido " + pedido.getCodPedido());
+            
+            String empleadoAuditoria = (codEmpleado == null || codEmpleado.isBlank()) ? "SISTEMA" : codEmpleado;
+            AuditoriaLog.registrarAccion(empleadoAuditoria, "Registró pedido asíncrono " + pedido.getCodPedido());
+        });
+    }
+
+    /**
+     * Asigna un repartidor a un pedido de forma asíncrona y actualiza el estado.
+     */
+    public CompletableFuture<Void> asignarRepartidorAsincrono(String codPedido, String codRepartidor) {
+        return CompletableFuture.runAsync(() -> {
+            // Delegamos la actualización del estado al servicio principal
+            // (En un sistema real también se grabaría el ID del repartidor en la BD)
+            pedidoService.actualizarEstado(codPedido, "EN CAMINO");
+            AuditoriaLog.registrarAccion("SISTEMA", "Asignado repartidor " + codRepartidor + " a pedido " + codPedido);
         });
     }
 }
-
