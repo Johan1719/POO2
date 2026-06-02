@@ -1,5 +1,6 @@
 package com.laptitefrance.delivery.views;
 
+import com.laptitefrance.delivery.controllers.PedidoController;
 import com.laptitefrance.delivery.models.Empleado;
 
 import javax.swing.*;
@@ -29,12 +30,18 @@ public class DashboardAsistenteView extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 14));
 
-        // Pestaña 1: Nueva Venta (El panel refactorizado)
-        PanelNuevaVenta panelNuevaVenta = new PanelNuevaVenta();
+        // 👇 1. MAGIA: Creamos un ÚNICO controlador inyectándole el código del empleado que inició sesión
+        PedidoController pedidoControllerGlobal = new PedidoController(asistenteActual.getCodEmpleado());
+
+        // 👇 2. Inyectamos ese mismo controlador a la vista de Nueva Venta
+        PanelNuevaVenta panelNuevaVenta = new PanelNuevaVenta(pedidoControllerGlobal);
         tabbedPane.addTab("🛒 Nueva Venta", panelNuevaVenta);
 
+        // 👇 3. Conectamos la vista real del Monitor (le pasamos el mismo controlador)
+        PanelMonitorPedidos panelMonitorPedidos = new PanelMonitorPedidos(pedidoControllerGlobal);
+        tabbedPane.addTab("📺 Monitor de Pedidos", panelMonitorPedidos);
+
         // Pestañas futuras (Placeholders para próximas tareas)
-        tabbedPane.addTab("📺 Monitor de Pedidos", new JPanel());
         tabbedPane.addTab("👥 Clientes", new JPanel());
         tabbedPane.addTab("📦 Inventario", new JPanel());
 

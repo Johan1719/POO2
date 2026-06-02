@@ -1,39 +1,62 @@
 package com.laptitefrance.delivery.controllers;
 
+import java.util.List;
+
 import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Cliente;
 import com.laptitefrance.delivery.models.Pedido;
 import com.laptitefrance.delivery.services.PedidoAsyncService;
 import com.laptitefrance.delivery.services.PedidoService;
 
-import java.util.List;
-
 public class PedidoController {
 
     private final PedidoService pedidoService;
     private final PedidoAsyncService pedidoAsyncService;
+    
+    // 👇 ESTADO INYECTADO: El controlador sabe quién opera la caja
+    private final String codCajeroActivo;
 
-    public PedidoController() {
-        // ESTRICTO: El controlador SÓLO instancia servicios, NUNCA repositorios
+    public PedidoController(String codCajeroActivo) {
         this.pedidoService = new PedidoService();
         this.pedidoAsyncService = new PedidoAsyncService(this.pedidoService);
+        this.codCajeroActivo = codCajeroActivo;
     }
 
-    public void generarPedido(Cliente cliente, int cantidadProductosEnCarrito, double total) {
+    // 👇 VISTA TONTA: Ya no pedimos el 'codAsistente' en los parámetros
+    public void generarPedido(
+            Cliente cliente,
+            int cantidadProductosEnCarrito,
+            double total,
+            String direccionEntrega,
+            String codTarifa,
+            String codPago
+    ) {
         if (cliente == null) {
             throw new ValidationException("Debe seleccionar un cliente.");
         }
-
         if (cantidadProductosEnCarrito == 0) {
             throw new ValidationException("Debe agregar productos al carrito.");
         }
-
         if (total <= 0) {
             throw new ValidationException("El total del pedido debe ser mayor a 0.");
         }
+        if (direccionEntrega == null || direccionEntrega.trim().isEmpty()) {
+            throw new ValidationException("La dirección de entrega no puede estar vacía.");
+        }
+        if (codTarifa == null || codTarifa.trim().isEmpty()) {
+            throw new ValidationException("Debe seleccionar una tarifa.");
+        }
+        if (codPago == null || codPago.trim().isEmpty()) {
+            throw new ValidationException("Debe seleccionar un método de pago.");
+        }
 
-        // Delegamos la creación asíncrona para no bloquear el EDT de Swing
-        pedidoAsyncService.crearPedidoAsync(cliente, total, "SISTEMA");
+        // --- TRUCO TEMPORAL DE DEBUGGING ---
+        // 1. Apagamos el hilo asíncrono comentando esta línea:
+        // pedidoAsyncService.crearPedidoAsync(cliente, total, direccionEntrega, codTarifa, codPago, this.codCajeroActivo);
+        
+        // 2. Encendemos el guardado directo (Síncrono) inyectando nuestro propio estado (this.codCajeroActivo):
+        Pedido pedido = pedidoService.ensamblarNuevoPedido(cliente, total, direccionEntrega, codTarifa, codPago, this.codCajeroActivo);
+        pedidoService.guardar(pedido);
     }
 
     public List<Pedido> listarPedidos() {
@@ -44,7 +67,6 @@ public class PedidoController {
         if (estado == null || estado.trim().isEmpty() || estado.equalsIgnoreCase("TODOS")) {
             return listarPedidos();
         }
-        // El filtro lógico pesado con Streams/Lambdas ocurre dentro del servicio
         return pedidoService.obtenerPedidosPorEstadoOrdenados(estado.trim());
     }
 
@@ -55,7 +77,6 @@ public class PedidoController {
         if (codRepartidor == null || codRepartidor.trim().isEmpty()) {
             throw new ValidationException("El código del repartidor no puede estar vacío.");
         }
-        // Delegamos la tarea asíncrona (CompletableFuture) al servicio concurrente
         pedidoAsyncService.asignarRepartidorAsincrono(codPedido, codRepartidor);
     }
 
@@ -66,7 +87,6 @@ public class PedidoController {
         if (nuevoEstado == null || nuevoEstado.trim().isEmpty()) {
             throw new ValidationException("Debe proporcionar un estado válido.");
         }
-        // El controlador simplemente pasa la petición limpia al gerente (Servicio)
         pedidoService.actualizarEstado(codPedido, nuevoEstado.trim());
     }
 }

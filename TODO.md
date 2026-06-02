@@ -1,25 +1,22 @@
-# TODO - Refactor MVC "La P'tite France"
+# TODO - Migración BD LaPtiteFranceDB
 
-## Paso 1 - Estructura MVC
-- [x] Identificar acoplamientos actuales en `LoginView` y `DashboardAsistenteView`.
-- [ ] Crear paquetes/estructura sugerida (controllers + exceptions).
+## Paso 1 (HECHO)
+- Actualizar `models/Pedido.java` para incluir:
+  - `codAsistente`
+  - `direccionEntrega`
+  - getters/setters y Builder.
 
-## Paso 2 - Excepciones manejables
-- [ ] Crear `exceptions/ValidationException.java`
-- [ ] Crear `exceptions/NotFoundException.java`
-- [ ] Crear `exceptions/DuplicateException.java`
+## Paso 2 (HECHO)
+- Actualizar `repositories/PedidoRepository.java` (SQL INSERT/SELECT/UPDATE) para columnas nuevas:
+  - `DireccionEntrega`
+  - `CodAsistente`
 
-## Paso 3 - Controllers nuevos
-- [ ] Crear `controllers/LoginController.java` (verifica empleado por código)
-- [ ] Crear `controllers/ClienteController.java` (buscar/registrar cliente con validaciones)
+## Paso 3 (EN PROGRESO)
+- Actualizar `services/PedidoService.java` para llenar los campos requeridos por la BD si el flujo UI aún no los define.
 
-## Paso 4 - Limpiar Views
-- [x] Refactorizar `views/LoginView.java` para que use `LoginController` y elimine repositorio
-- [x] Refactorizar `views/DashboardAsistenteView.java` para que use `ClienteController` y elimine validaciones/repositorios (pendiente implementación en esta iteración)
+## Paso 4
+- Ejecutar compilación (`mvn test` / `mvn package`) para listar fallos restantes.
 
-
-
-## Paso 5 - Verificación
-- [ ] Ejecutar `mvn test` o `mvn -q test` para verificar compilación
-- [ ] Ejecutar la app y comprobar flujo Login -> Dashboard
+## Paso 5
+- Eliminar o corregir código obsoleto (tablas `Atencion`/`Direccion`) según falle la compilación.
 

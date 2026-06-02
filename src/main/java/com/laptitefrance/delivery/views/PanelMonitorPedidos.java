@@ -1,30 +1,43 @@
 package com.laptitefrance.delivery.views;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.DefaultTableModel;
+
 import com.laptitefrance.delivery.controllers.PedidoController;
 import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Pedido;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.List;
-
 public class PanelMonitorPedidos extends JPanel {
 
+    // 👇 Controlador inyectado
     private final PedidoController pedidoController;
+    
     private JTable tablaPedidos;
     private DefaultTableModel modeloPedidos;
     private JComboBox<String> cbxFiltroEstado;
 
-    public PanelMonitorPedidos() {
-        // ESTRICTO: La Vista SÓLO interactúa con el Controlador (El Recepcionista).
-        this.pedidoController = new PedidoController();
+    // 👇 Constructor modificado para recibir Inyección de Dependencias
+    public PanelMonitorPedidos(PedidoController pedidoController) {
+        this.pedidoController = pedidoController;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         inicializarComponentes();
-        cargarPedidos("TODOS"); // Carga inicial
+        cargarPedidos("TODOS"); 
     }
 
     private void inicializarComponentes() {
@@ -34,7 +47,8 @@ public class PanelMonitorPedidos extends JPanel {
 
         panelNorte.add(new JLabel("Estado del Pedido:"));
         
-        cbxFiltroEstado = new JComboBox<>(new String[]{"TODOS", "EN ESPERA", "PREPARANDO", "EN CAMINO", "ENTREGADO"});
+        cbxFiltroEstado = new JComboBox<>(new String[]{"TODOS", "EN ESPERA", "EN CAMINO", "ENTREGADO"});
+
         panelNorte.add(cbxFiltroEstado);
 
         JButton btnFiltrar = new JButton("🔍 Filtrar");
@@ -47,7 +61,6 @@ public class PanelMonitorPedidos extends JPanel {
         JPanel panelCentro = new JPanel(new BorderLayout());
         panelCentro.setBorder(BorderFactory.createTitledBorder("Listado de Pedidos"));
 
-        // Modelo estricto para que las celdas no sean editables por el usuario directo
         modeloPedidos = new DefaultTableModel(new Object[]{"Código Pedido", "ID Cliente", "Monto Total", "Estado"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -57,7 +70,7 @@ public class PanelMonitorPedidos extends JPanel {
 
         tablaPedidos = new JTable(modeloPedidos);
         tablaPedidos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tablaPedidos.getTableHeader().setReorderingAllowed(false); // Previene que arrastren columnas
+        tablaPedidos.getTableHeader().setReorderingAllowed(false); 
         
         panelCentro.add(new JScrollPane(tablaPedidos), BorderLayout.CENTER);
         add(panelCentro, BorderLayout.CENTER);
@@ -81,9 +94,8 @@ public class PanelMonitorPedidos extends JPanel {
     }
 
     private void cargarPedidos(String estado) {
-        modeloPedidos.setRowCount(0); // Limpia la tabla
+        modeloPedidos.setRowCount(0); 
         try {
-            // El Controlador nos sirve los datos limpios. Todo el filtrado Stream y consulta BD fue resuelto más atrás.
             List<Pedido> pedidos = pedidoController.filtrarPedidosPorEstado(estado);
             
             for (Pedido p : pedidos) {
@@ -113,7 +125,6 @@ public class PanelMonitorPedidos extends JPanel {
             try {
                 pedidoController.asignarRepartidor(codPedido, codRepartidor.trim());
                 JOptionPane.showMessageDialog(this, "La asignación se está procesando en segundo plano.", "Procesando", JOptionPane.INFORMATION_MESSAGE);
-                // Recargamos la vista para reflejar posibles cambios (o podríamos usar un Observer aquí)
                 cargarPedidos((String) cbxFiltroEstado.getSelectedItem());
             } catch (ValidationException ex) {
                 mostrarAdvertencia(ex.getMessage());
@@ -149,7 +160,6 @@ public class PanelMonitorPedidos extends JPanel {
         }
     }
 
-    // Métodos utilitarios para centralizar la visualización de mensajes (Encapsulamiento de la UI)
     private void mostrarAdvertencia(String mensaje) { JOptionPane.showMessageDialog(this, mensaje, "Atención", JOptionPane.WARNING_MESSAGE); }
     private void mostrarError(String mensaje) { JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE); }
 }

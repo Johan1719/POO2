@@ -1,23 +1,44 @@
 package com.laptitefrance.delivery.views;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
+
 import com.laptitefrance.delivery.controllers.ClienteController;
+import com.laptitefrance.delivery.controllers.PagoController;
 import com.laptitefrance.delivery.controllers.PedidoController;
 import com.laptitefrance.delivery.controllers.ProductoController;
+import com.laptitefrance.delivery.controllers.TarifaController;
 import com.laptitefrance.delivery.exceptions.DuplicateException;
 import com.laptitefrance.delivery.exceptions.NotFoundException;
 import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Cliente;
+import com.laptitefrance.delivery.models.Pago;
 import com.laptitefrance.delivery.models.Producto;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.List;
+import com.laptitefrance.delivery.models.Tarifa;
 
 public class PanelNuevaVenta extends JPanel {
 
     private final ClienteController clienteController;
     private final ProductoController productoController;
+    private final TarifaController tarifaController;
+    private final PagoController pagoController;
+    
+    // 👇 Variable inyectada
     private final PedidoController pedidoController;
 
     private Cliente clienteSeleccionado = null;
@@ -34,11 +55,15 @@ public class PanelNuevaVenta extends JPanel {
     private JLabel lblTotal;
     private double totalCarrito = 0.0;
 
-    public PanelNuevaVenta() {
-        // Únicamente instanciamos los Controladores (Cero Repositorios)
+    // 👇 Constructor modificado para recibir la inyección
+    public PanelNuevaVenta(PedidoController pedidoController) {
         this.clienteController = new ClienteController();
         this.productoController = new ProductoController();
-        this.pedidoController = new PedidoController();
+        this.tarifaController = new TarifaController();
+        this.pagoController = new PagoController();
+        
+        // El controlador orquestado se asigna aquí
+        this.pedidoController = pedidoController;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -66,7 +91,6 @@ public class PanelNuevaVenta extends JPanel {
         btnNuevo.addActionListener(e -> registrarNuevoCliente());
         panelNorte.add(btnNuevo);
 
-        // UX Fix: Botón para deseleccionar cliente actual
         JButton btnLimpiarCliente = new JButton("Limpiar");
         btnLimpiarCliente.addActionListener(e -> limpiarCliente());
         panelNorte.add(btnLimpiarCliente);
@@ -81,12 +105,13 @@ public class PanelNuevaVenta extends JPanel {
         JPanel panelCentro = new JPanel(new BorderLayout());
         panelCentro.setBorder(BorderFactory.createTitledBorder("Menú Disponible (Solo con Stock)"));
 
-        // UX Fix: Hacemos que la tabla no sea editable desde la vista
         modeloMenu = new DefaultTableModel(new Object[]{"Código", "Nombre", "Precio", "Stock"}, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) { return false; }
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
         };
-        
+
         tablaMenu = new JTable(modeloMenu);
         panelCentro.add(new JScrollPane(tablaMenu), BorderLayout.CENTER);
 
@@ -101,18 +126,18 @@ public class PanelNuevaVenta extends JPanel {
         panelSur.setPreferredSize(new Dimension(900, 200));
         panelSur.setBorder(BorderFactory.createTitledBorder("Carrito de Compras"));
 
-        // UX Fix: Tabla Carrito no editable
         modeloCarrito = new DefaultTableModel(new Object[]{"Código", "Nombre", "Cant", "Subtotal"}, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) { return false; }
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
         };
-        
+
         tablaCarrito = new JTable(modeloCarrito);
         panelSur.add(new JScrollPane(tablaCarrito), BorderLayout.CENTER);
 
         JPanel panelTotal = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-        // UX Fix: Botón de Quitar Fila del Carrito
         JButton btnQuitar = new JButton("❌ Quitar del Carrito");
         btnQuitar.addActionListener(e -> quitarDelCarrito());
         panelTotal.add(btnQuitar);
@@ -134,12 +159,12 @@ public class PanelNuevaVenta extends JPanel {
     private void cargarMenu() {
         modeloMenu.setRowCount(0);
         List<Producto> productos = productoController.obtenerProductosConStock();
-        
+
         for (Producto p : productos) {
             modeloMenu.addRow(new Object[]{
-                    p.getCodProducto(), 
-                    p.getNombreProd(), 
-                    p.getPrecioProd(), 
+                    p.getCodProducto(),
+                    p.getNombreProd(),
+                    p.getPrecioProd(),
                     p.getStock()
             });
         }
@@ -175,10 +200,10 @@ public class PanelNuevaVenta extends JPanel {
         if (opcion == JOptionPane.OK_OPTION) {
             try {
                 clienteSeleccionado = clienteController.registrarCliente(txtNombre.getText(), txtCelular.getText());
-                
+
                 txtBuscarCliente.setText(clienteSeleccionado.getNrocelular());
                 lblNombreCliente.setText(" Cliente: " + clienteSeleccionado.getNombreCliente());
-                
+
                 JOptionPane.showMessageDialog(this, "Cliente registrado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             } catch (ValidationException | DuplicateException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Error de Validación", JOptionPane.ERROR_MESSAGE);
@@ -206,7 +231,7 @@ public class PanelNuevaVenta extends JPanel {
 
             double sub = pre * cant;
             modeloCarrito.addRow(new Object[]{cod, nom, cant, sub});
-            
+
             totalCarrito += sub;
             actualizarTotal();
         } catch (NumberFormatException e) {
@@ -223,10 +248,9 @@ public class PanelNuevaVenta extends JPanel {
 
         double subtotal = (double) modeloCarrito.getValueAt(fila, 3);
         totalCarrito -= subtotal;
-        
-        // Evitar bugs de precisión (ej. -0.0000000001)
+
         if (totalCarrito < 0) totalCarrito = 0.0;
-        
+
         modeloCarrito.removeRow(fila);
         actualizarTotal();
     }
@@ -237,17 +261,73 @@ public class PanelNuevaVenta extends JPanel {
 
     private void generarPedido() {
         try {
-            // Pasamos validación de pedido al controlador
-            pedidoController.generarPedido(clienteSeleccionado, modeloCarrito.getRowCount(), totalCarrito);
-            
-            JOptionPane.showMessageDialog(this, 
-                "¡Pedido generado exitosamente!\nTotal: S/ " + String.format("%.2f", totalCarrito), 
-                "Transacción Exitosa", 
-                JOptionPane.INFORMATION_MESSAGE);
-            
-            // UX Fix: Limpiamos la pantalla y reiniciamos el carrito para el siguiente pedido
+            JTextField txtDireccionEntrega = new JTextField(30);
+
+            List<Tarifa> tarifas = tarifaController.obtenerTarifas();
+            JComboBox<Tarifa> cbxTarifa = new JComboBox<>(tarifas.toArray(new Tarifa[0]));
+
+            List<Pago> pagos = pagoController.obtenerPagos();
+            JComboBox<Pago> cbxPago = new JComboBox<>(pagos.toArray(new Pago[0]));
+
+            Object[] formulario = {
+                    "Dirección de entrega:", txtDireccionEntrega,
+                    "Tarifa:", cbxTarifa,
+                    "Método de pago:", cbxPago
+            };
+
+            int opcion = JOptionPane.showConfirmDialog(
+                    this,
+                    formulario,
+                    "Checkout - Generar Pedido",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (opcion != JOptionPane.OK_OPTION) {
+                return;
+            }
+
+            if (clienteSeleccionado == null) {
+                throw new ValidationException("Debe seleccionar un cliente.");
+            }
+            if (modeloCarrito.getRowCount() == 0) {
+                throw new ValidationException("Debe agregar productos al carrito.");
+            }
+            if (totalCarrito <= 0) {
+                throw new ValidationException("El total del pedido debe ser mayor a 0.");
+            }
+
+            String direccionEntrega = txtDireccionEntrega.getText() == null ? "" : txtDireccionEntrega.getText().trim();
+            if (direccionEntrega.isEmpty()) {
+                throw new ValidationException("La dirección de entrega no puede estar vacía.");
+            }
+
+            Tarifa tarifaSeleccionada = (Tarifa) cbxTarifa.getSelectedItem();
+            Pago pagoSeleccionado = (Pago) cbxPago.getSelectedItem();
+
+            if (tarifaSeleccionada == null || pagoSeleccionado == null) {
+                throw new ValidationException("Debe seleccionar una tarifa y un método de pago.");
+            }
+
+            // 👇 VISTA TONTA: Mandamos la orden sin datos del cajero. El Controlador lo resuelve.
+            pedidoController.generarPedido(
+                    clienteSeleccionado,
+                    modeloCarrito.getRowCount(),
+                    totalCarrito,
+                    direccionEntrega,
+                    tarifaSeleccionada.getCodTarifa(),
+                    pagoSeleccionado.getCodPago()
+            );
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "¡Pedido generado exitosamente!\nTotal: S/ " + String.format("%.2f", totalCarrito),
+                    "Transacción Exitosa",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
             limpiarPantalla();
-            
+
         } catch (ValidationException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Atención", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {

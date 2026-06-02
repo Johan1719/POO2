@@ -1,14 +1,14 @@
 package com.laptitefrance.delivery.services;
 
-import com.laptitefrance.delivery.models.Pedido;
-import com.laptitefrance.delivery.repositories.IRepositorioBase;
-
-import com.laptitefrance.delivery.repositories.PedidoRepository;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import com.laptitefrance.delivery.models.Pedido;
+import com.laptitefrance.delivery.repositories.IRepositorioBase;
+import com.laptitefrance.delivery.repositories.PedidoRepository;
 
 /**
  * Servicios de negocio para {@link Pedido}.
@@ -75,16 +75,43 @@ public class PedidoService {
         pedidoRepository.insert(pedido);
     }
 
-    public Pedido ensamblarNuevoPedido(com.laptitefrance.delivery.models.Cliente cliente, double total) {
+   public Pedido ensamblarNuevoPedido(
+            com.laptitefrance.delivery.models.Cliente cliente,
+            double total,
+            String direccionEntrega,
+            String codTarifa,
+            String codPago,
+            String codAsistente
+    ) {
         Pedido pedido = new Pedido();
-        // Límite estricto de 5 caracteres: 'P' + 4 dígitos (Ej: P0123 a P9999)
+        
+        // 1. Generamos el código único (Tu lógica actual es perfecta)
         pedido.setCodPedido(String.format("P%04d", (int) (Math.random() * 10000)));
+        
+        // 2. Datos básicos del pedido
         pedido.setIdCliente(cliente.getIdCliente());
         pedido.setMontoPedido(total);
-        pedido.setEstado("PENDIENTE");
+        pedido.setEstado("EN ESPERA"); 
         pedido.setFechaSolicitud(LocalDateTime.now());
+
+        // 3. Nuevos atributos exigidos por la BD
+        pedido.setDireccionEntrega(direccionEntrega);
+        pedido.setCodAsistente(codAsistente);
+
+        // 4. Llaves foráneas (Tarifa y Pago)
+        pedido.setCodTarifa(codTarifa);
+        pedido.setCodPago(codPago);
+
+        // 5. ¡VITAL PARA EVITAR ERRORES EN SQL SERVER!
+        // Un pedido nuevo no tiene repartidor ni tiempos de entrega reales aún.
+        // Forzamos explícitamente a null para que el PreparedStatement no envíe basura a la BD.
+        pedido.setCodRepartidor(null);
+        pedido.setTiempoEntEstimado(null);
+        pedido.setTiempoEntReal(null);
+
         return pedido;
     }
+
 
     public List<Pedido> obtenerTodosLosPedidos() {
         return pedidoRepository.findAll();

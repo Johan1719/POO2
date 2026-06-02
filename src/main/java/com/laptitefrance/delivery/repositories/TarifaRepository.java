@@ -15,11 +15,11 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override
     public void insert(Tarifa entity) {
-        String sql = "INSERT INTO Tarifa (CodTarifa, NombreTarifa, PrecioTarifa) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO Tarifa (CodTarifa, NombreZona, PrecioTarifa) VALUES (?, ?, ?)";
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, entity.getCodTarifa());
-            ps.setString(2, entity.getNombreTarifa());
+            ps.setString(2, entity.getNombreZona());
             ps.setDouble(3, entity.getPrecioTarifa());
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -29,7 +29,7 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override
     public Optional<Tarifa> findById(String id) {
-        String sql = "SELECT CodTarifa, NombreTarifa, PrecioTarifa FROM Tarifa WHERE CodTarifa = ?";
+        String sql = "SELECT CodTarifa, NombreZona, PrecioTarifa FROM Tarifa WHERE CodTarifa = ?";
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, id);
@@ -37,7 +37,7 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
                 if (!rs.next()) return Optional.empty();
                 Tarifa t = new Tarifa();
                 t.setCodTarifa(rs.getString("CodTarifa"));
-                t.setNombreTarifa(rs.getString("NombreTarifa"));
+                t.setNombreZona(rs.getString("NombreZona"));
                 t.setPrecioTarifa(rs.getDouble("PrecioTarifa"));
                 return Optional.of(t);
             }
@@ -48,7 +48,7 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override
     public List<Tarifa> findAll() {
-        String sql = "SELECT CodTarifa, NombreTarifa, PrecioTarifa FROM Tarifa";
+        String sql = "SELECT CodTarifa, NombreZona, PrecioTarifa FROM Tarifa";
         List<Tarifa> result = new ArrayList<>();
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -56,7 +56,7 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
             while (rs.next()) {
                 Tarifa t = new Tarifa();
                 t.setCodTarifa(rs.getString("CodTarifa"));
-                t.setNombreTarifa(rs.getString("NombreTarifa"));
+                t.setNombreZona(rs.getString("NombreZona"));
                 t.setPrecioTarifa(rs.getDouble("PrecioTarifa"));
                 result.add(t);
             }
@@ -68,10 +68,10 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override
     public void update(Tarifa entity) {
-        String sql = "UPDATE Tarifa SET NombreTarifa = ?, PrecioTarifa = ? WHERE CodTarifa = ?";
+        String sql = "UPDATE Tarifa SET NombreZona = ?, PrecioTarifa = ? WHERE CodTarifa = ?";
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, entity.getNombreTarifa());
+            ps.setString(1, entity.getNombreZona());
             ps.setDouble(2, entity.getPrecioTarifa());
             ps.setString(3, entity.getCodTarifa());
             ps.executeUpdate();

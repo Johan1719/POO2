@@ -89,5 +89,10 @@ public class Pago {
     public void setCostoTarifa(double costoTarifa) {
         this.costoTarifa = costoTarifa;
     }
+
+    @Override
+    public String toString() {
+        return codPago + " - " + metodoPago;
+    }
 }
 

@@ -9,10 +9,17 @@ public class Pedido {
     private String estado;
     private LocalDateTime tiempoEntEstimado;
     private LocalDateTime tiempoEntReal;
+
+    // FK actuales
+    private String codAsistente; // FK -> Asistente(CodAsistente)
     private String codRepartidor; // FK -> Repartidor(CodRepartidor)
     private String idCliente; // FK -> Cliente(IDCliente)
     private String codTarifa; // FK -> Tarifa(CodTarifa)
     private String codPago; // FK -> Pago(CodPago)
+
+    // DATOS ABSORBIDOS
+    private String direccionEntrega; // DireccionEntrega VARCHAR(100)
+
 
     public Pedido() {
     }
@@ -24,11 +31,15 @@ public class Pedido {
         this.estado = builder.estado;
         this.tiempoEntEstimado = builder.tiempoEntEstimado;
         this.tiempoEntReal = builder.tiempoEntReal;
+        this.codAsistente = builder.codAsistente;
         this.codRepartidor = builder.codRepartidor;
         this.idCliente = builder.idCliente;
         this.codTarifa = builder.codTarifa;
         this.codPago = builder.codPago;
+        this.direccionEntrega = builder.direccionEntrega;
     }
+
+
 
     public String getCodPedido() {
         return codPedido;
@@ -78,6 +89,14 @@ public class Pedido {
         this.tiempoEntReal = tiempoEntReal;
     }
 
+    public String getCodAsistente() {
+        return codAsistente;
+    }
+
+    public void setCodAsistente(String codAsistente) {
+        this.codAsistente = codAsistente;
+    }
+
     public String getCodRepartidor() {
         return codRepartidor;
     }
@@ -85,6 +104,7 @@ public class Pedido {
     public void setCodRepartidor(String codRepartidor) {
         this.codRepartidor = codRepartidor;
     }
+
 
     public String getIdCliente() {
         return idCliente;
@@ -110,20 +130,33 @@ public class Pedido {
         this.codPago = codPago;
     }
 
+    public String getDireccionEntrega() {
+        return direccionEntrega;
+    }
+
+    public void setDireccionEntrega(String direccionEntrega) {
+        this.direccionEntrega = direccionEntrega;
+    }
+
     /**
      * Builder (patrón creacional) para construir un Pedido de forma limpia.
      */
     public static class Builder {
         private String codPedido;
+
         private LocalDateTime fechaSolicitud;
         private double montoPedido;
         private String estado;
         private LocalDateTime tiempoEntEstimado;
         private LocalDateTime tiempoEntReal;
+        private String codAsistente;
         private String codRepartidor;
         private String idCliente;
         private String codTarifa;
         private String codPago;
+        private String direccionEntrega;
+
+
 
         public Builder codPedido(String codPedido) {
             this.codPedido = codPedido;
@@ -155,12 +188,18 @@ public class Pedido {
             return this;
         }
 
+        public Builder codAsistente(String codAsistente) {
+            this.codAsistente = codAsistente;
+            return this;
+        }
+
         public Builder codRepartidor(String codRepartidor) {
             this.codRepartidor = codRepartidor;
             return this;
         }
 
         public Builder idCliente(String idCliente) {
+
             this.idCliente = idCliente;
             return this;
         }
@@ -175,7 +214,13 @@ public class Pedido {
             return this;
         }
 
+        public Builder direccionEntrega(String direccionEntrega) {
+            this.direccionEntrega = direccionEntrega;
+            return this;
+        }
+
         public Pedido build() {
+
             return new Pedido(this);
         }
     }

@@ -2,15 +2,15 @@ package com.laptitefrance.delivery.models;
 
 public class Tarifa {
     private String codTarifa; // CHAR(3)
-    private String nombreTarifa;
+    private String nombreZona; // NombreZona VARCHAR(30)
     private double precioTarifa;
 
     public Tarifa() {
     }
 
-    public Tarifa(String codTarifa, String nombreTarifa, double precioTarifa) {
+    public Tarifa(String codTarifa, String nombreZona, double precioTarifa) {
         this.codTarifa = codTarifa;
-        this.nombreTarifa = nombreTarifa;
+        this.nombreZona = nombreZona;
         this.precioTarifa = precioTarifa;
     }
 
@@ -22,12 +22,12 @@ public class Tarifa {
         this.codTarifa = codTarifa;
     }
 
-    public String getNombreTarifa() {
-        return nombreTarifa;
+    public String getNombreZona() {
+        return nombreZona;
     }
 
-    public void setNombreTarifa(String nombreTarifa) {
-        this.nombreTarifa = nombreTarifa;
+    public void setNombreZona(String nombreZona) {
+        this.nombreZona = nombreZona;
     }
 
     public double getPrecioTarifa() {
@@ -36,6 +36,11 @@ public class Tarifa {
 
     public void setPrecioTarifa(double precioTarifa) {
         this.precioTarifa = precioTarifa;
+    }
+
+    @Override
+    public String toString() {
+        return codTarifa + " - " + nombreZona + " (S/ " + precioTarifa + ")";
     }
 }
 
