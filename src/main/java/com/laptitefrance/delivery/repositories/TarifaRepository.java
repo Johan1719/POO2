@@ -11,6 +11,17 @@ import java.util.Optional;
 import com.laptitefrance.delivery.config.DBConnection;
 import com.laptitefrance.delivery.models.Tarifa;
 
+/**
+ * DAO (Repositorio) de Tarifa — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla {@code Tarifa}
+ * de SQL Server, traduciendo entre filas y objetos {@link Tarifa}. La clave (ID) es
+ * {@code CodTarifa} (String); cada tarifa lleva zona, precio y {@code TiempoPromedio} (int, minutos).
+ * Lo usa {@code TarifaController} para ofrecer las opciones de envío en la venta.
+ *
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ * Usa PreparedStatement y try-with-resources; los errores SQL se envuelven en RuntimeException.
+ */
 public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override

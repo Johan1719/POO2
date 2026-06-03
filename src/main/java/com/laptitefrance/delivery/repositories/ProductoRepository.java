@@ -11,6 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Producto — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla {@code Producto}
+ * de SQL Server, traduciendo entre filas y objetos {@link Producto}. La clave (ID) es
+ * {@code CodProducto} (String); incluye stock, precio y la categoría ({@code CodCat}).
+ * Lo usa {@code ProductoController} para mostrar el menú disponible.
+ *
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ * Usa PreparedStatement y try-with-resources; los errores SQL se envuelven en RuntimeException.
+ */
 public class ProductoRepository implements IRepositorioBase<Producto, String> {
 
     @Override

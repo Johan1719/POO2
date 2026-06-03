@@ -13,6 +13,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Cliente — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla {@code Cliente}
+ * de SQL Server, traduciendo entre filas y objetos {@link Cliente}. La clave (ID) es
+ * {@code IDCliente} (String). Al insertar, la fecha de registro la pone la BD con {@code GETDATE()}.
+ *
+ * Además del CRUD estándar, expone el método extra {@link #findByTelefono(String)}, usado por
+ * {@code ClienteController} para identificar al cliente por su número de celular en la venta.
+ *
+ * El detalle de parámetros y retorno de los métodos del contrato está en {@link IRepositorioBase}.
+ */
 public class ClienteRepository implements IRepositorioBase<Cliente, String> {
 
     @Override
@@ -106,7 +118,13 @@ public class ClienteRepository implements IRepositorioBase<Cliente, String> {
         }
     }
 
-    // ⭐ NUEVO MÉTODO: Buscar por Celular para la vista del Asistente ⭐
+    /**
+     * Método extra (fuera del contrato CRUD): busca un cliente por su número de celular.
+     * Lo usa la vista del Asistente / {@code ClienteController} para identificar al cliente.
+     *
+     * @param celular número de celular (String) a buscar (coincidencia exacta).
+     * @return Optional&lt;Cliente&gt; con el cliente si existe, o Optional.empty() si ninguno coincide.
+     */
     public Optional<Cliente> findByTelefono(String celular) {
         String sql = "SELECT IDCliente, FechaRegistro, NombreCliente, Nrocelular FROM Cliente WHERE Nrocelular = ?";
         try (Connection con = DBConnection.getConexion();

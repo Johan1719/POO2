@@ -11,6 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Categoria — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla {@code Categoria}
+ * de SQL Server, traduciendo entre filas y objetos {@link Categoria}. La clave (ID) es
+ * {@code CodCat} (String); agrupa a los productos por su categoría.
+ *
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ * Usa PreparedStatement y try-with-resources; los errores SQL se envuelven en RuntimeException.
+ */
 public class CategoriaRepository implements IRepositorioBase<Categoria, String> {
 
     @Override

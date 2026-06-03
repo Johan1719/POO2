@@ -11,6 +11,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Pedido_Producto — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla intermedia
+ * {@code Pedido_Producto}, que resuelve la relación muchos-a-muchos entre Pedido y Producto
+ * (qué productos y en qué cantidad lleva cada pedido).
+ *
+ * Particularidad: la tabla tiene <b>clave primaria compuesta</b> ({@code CodProducto} + {@code CodPedido}).
+ * Como {@link IRepositorioBase} espera un único ID, aquí el ID se representa como un String
+ * con el formato {@code "codProducto|codPedido"} y el helper {@link #splitId(String)} lo separa.
+ *
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ */
 public class PedidoProductoRepository implements IRepositorioBase<PedidoProducto, String> {
 
     // ID = codProducto + "|" + codPedido
@@ -105,6 +118,12 @@ public class PedidoProductoRepository implements IRepositorioBase<PedidoProducto
         }
     }
 
+    /**
+     * Separa el ID compuesto en sus dos partes.
+     * @param id cadena con formato {@code "codProducto|codPedido"}.
+     * @return arreglo String[2]: [0] = codProducto, [1] = codPedido.
+     * @throws IllegalArgumentException si el id es null o no contiene el separador "|".
+     */
     private static String[] splitId(String id) {
         if (id == null || !id.contains(SEP)) {
             throw new IllegalArgumentException("ID inválido para PedidoProducto. Formato esperado: codProducto|codPedido");

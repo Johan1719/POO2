@@ -11,6 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Empleado — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla {@code Empleado}
+ * de SQL Server, traduciendo entre filas de la BD y objetos {@link Empleado}. La clave (ID)
+ * es {@code CodEmpleado} (String). Lo usa, por ejemplo, {@code LoginController} para autenticar.
+ *
+ * El detalle de parámetros y valores de retorno de cada método está en {@link IRepositorioBase}.
+ * Todas las consultas usan {@code PreparedStatement} (previene inyección SQL) y conexiones
+ * con try-with-resources (se cierran solas). Los errores SQL se envuelven en RuntimeException.
+ */
 public class EmpleadoRepository implements IRepositorioBase<Empleado, String> {
 
     @Override

@@ -11,6 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Telefono — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla {@code Telefono}
+ * de SQL Server (teléfonos de empleados). A diferencia de los demás repositorios, su clave
+ * (ID) es {@code IDTelefono} de tipo <b>Integer</b> (numérico autogenerado), no String;
+ * cada teléfono referencia a un {@code CodEmpleado}.
+ *
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ * Usa PreparedStatement y try-with-resources; los errores SQL se envuelven en RuntimeException.
+ */
 public class TelefonoRepository implements IRepositorioBase<Telefono, Integer> {
 
     @Override

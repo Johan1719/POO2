@@ -4,6 +4,15 @@ import io.javalin.Javalin;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * CONTROLLER REST (independiente de la app Swing).
+ *
+ * Levanta un pequeño servidor web con Javalin para que la app del repartidor
+ * (por ejemplo, un celular) consulte los pedidos pendientes vía HTTP/JSON.
+ *
+ * Es un punto de entrada alternativo con su propio main(). Hoy devuelve datos
+ * SIMULADOS; el siguiente paso es reemplazarlos por una consulta real al PedidoRepository.
+ */
 public class ApiRepartidor {
     public static void main(String[] args) {
         

@@ -11,10 +11,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Repartidor — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} para la tabla {@code Repartidor}.
+ * Igual que {@code AsistenteRepository}, es una <b>tabla dependiente</b>: su PK
+ * {@code CodRepartidor} es a la vez FK hacia {@code Empleado(CodEmpleado)}. Por eso:
+ *   - {@code findById}/{@code findAll} hacen INNER JOIN con {@code Empleado} para traer los datos personales.
+ *   - {@code insert} solo crea la fila en {@code Repartidor} (el Empleado ya debe existir).
+ *   - {@code update} modifica los datos en la tabla {@code Empleado}.
+ *   - {@code deleteById} elimina únicamente la fila dependiente de {@code Repartidor}.
+ *
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ */
 public class RepartidorRepository implements IRepositorioBase<Repartidor, String> {
-
-    // Tabla dependiente: Repartidor(CodRepartidor FK -> Empleado)
-    // En el repositorio devolvemos Repartidor con datos de Empleado.
 
     @Override
     public void insert(Repartidor entity) {

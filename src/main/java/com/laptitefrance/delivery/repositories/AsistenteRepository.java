@@ -11,10 +11,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Asistente — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} para la tabla {@code Asistente}.
+ * Particularidad de modelado: {@code Asistente} es una <b>tabla dependiente</b> cuya PK
+ * {@code CodAsistente} es a la vez FK hacia {@code Empleado(CodEmpleado)} (herencia por tabla).
+ * Por eso:
+ *   - {@code findById}/{@code findAll} hacen un INNER JOIN con {@code Empleado} para traer los
+ *     datos personales (nombre, número, dirección...) además de la fila de Asistente.
+ *   - {@code insert} solo crea la fila en {@code Asistente} (el Empleado ya debe existir).
+ *   - {@code update} modifica los datos en la tabla {@code Empleado} (Asistente no tiene columnas propias).
+ *   - {@code deleteById} elimina únicamente la fila dependiente de {@code Asistente}.
+ *
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ */
 public class AsistenteRepository implements IRepositorioBase<Asistente, String> {
-
-    // Tabla dependiente: Asistente(CodAsistente FK -> Empleado)
-    // En el repositorio devolvemos Asistente con datos de Empleado.
 
     @Override
     public void insert(Asistente entity) {

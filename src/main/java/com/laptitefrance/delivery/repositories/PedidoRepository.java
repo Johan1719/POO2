@@ -13,6 +13,20 @@ import java.util.Optional;
 import com.laptitefrance.delivery.config.DBConnection;
 import com.laptitefrance.delivery.models.Pedido;
 
+/**
+ * DAO (Repositorio) de Pedido — patrón Repository/DAO. Es el repositorio central del sistema.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla {@code Pedido}
+ * de SQL Server, traduciendo entre filas y objetos {@link Pedido}. La clave (ID) es
+ * {@code CodPedido} (String). Maneja varias columnas de fecha/hora (FechaSolicitud,
+ * TiempoEntEstimado, TiempoEntReal, HoraEnvio) y las claves foráneas a Cliente, Asistente,
+ * Repartidor, Tarifa y Pago.
+ *
+ * Lo usa {@code PedidoController} para crear pedidos, listarlos, asignar repartidor y cambiar estado.
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ * Las fechas se convierten con los helpers {@code setTimestampOrNull} / {@code getTimestampAsLocalDateTime},
+ * que toleran valores null. Usa PreparedStatement (anti-inyección SQL) y try-with-resources.
+ */
 public class PedidoRepository implements IRepositorioBase<Pedido, String> {
 
     @Override
@@ -172,6 +186,12 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
         }
     }
 
+    /**
+     * Fija un parámetro de fecha en el PreparedStatement, tolerando null.
+     * @param ps    sentencia preparada destino.
+     * @param index posición (1-based) del parámetro {@code ?}.
+     * @param value fecha a fijar (LocalDateTime); si es null, se inserta NULL en la BD.
+     */
     private static void setTimestampOrNull(PreparedStatement ps, int index, LocalDateTime value) throws SQLException {
         if (value == null) {
             ps.setTimestamp(index, null);
@@ -180,6 +200,12 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
         }
     }
 
+    /**
+     * Lee una columna de fecha del ResultSet y la convierte a LocalDateTime.
+     * @param rs     resultado de la consulta.
+     * @param column nombre de la columna de tipo fecha/hora.
+     * @return el {@link LocalDateTime} leído, o null si la columna era NULL.
+     */
     private static LocalDateTime getTimestampAsLocalDateTime(ResultSet rs, String column) throws SQLException {
         Timestamp ts = rs.getTimestamp(column);
         return ts != null ? ts.toLocalDateTime() : null;

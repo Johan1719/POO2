@@ -13,6 +13,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * DAO (Repositorio) de Pago — patrón Repository/DAO.
+ *
+ * Implementa el contrato CRUD de {@link IRepositorioBase} sobre la tabla {@code Pago}
+ * de SQL Server, traduciendo entre filas y objetos {@link Pago}. La clave (ID) es
+ * {@code CodPago} (String); registra método, monto, IGV, descuentos y costo de tarifa.
+ *
+ * El detalle de parámetros y retorno de cada método está en {@link IRepositorioBase}.
+ * Para fechas usa los helpers {@code setTimestampOrNull} / {@code getTimestampAsLocalDateTime},
+ * que convierten de forma segura entre {@link java.time.LocalDateTime} y {@code java.sql.Timestamp}
+ * (tolerando valores null). Usa PreparedStatement y try-with-resources.
+ */
 public class PagoRepository implements IRepositorioBase<Pago, String> {
 
     @Override
@@ -115,11 +127,23 @@ public class PagoRepository implements IRepositorioBase<Pago, String> {
         }
     }
 
+    /**
+     * Fija un parámetro de fecha en el PreparedStatement, tolerando null.
+     * @param ps    sentencia preparada destino.
+     * @param index posición (1-based) del parámetro {@code ?}.
+     * @param value fecha a fijar (LocalDateTime); si es null, se inserta NULL en la BD.
+     */
     private static void setTimestampOrNull(PreparedStatement ps, int index, LocalDateTime value) throws SQLException {
         if (value == null) ps.setTimestamp(index, null);
         else ps.setTimestamp(index, Timestamp.valueOf(value));
     }
 
+    /**
+     * Lee una columna de fecha del ResultSet y la convierte a LocalDateTime.
+     * @param rs     resultado de la consulta.
+     * @param column nombre de la columna de tipo fecha/hora.
+     * @return el {@link LocalDateTime} leído, o null si la columna era NULL.
+     */
     private static LocalDateTime getTimestampAsLocalDateTime(ResultSet rs, String column) throws SQLException {
         Timestamp ts = rs.getTimestamp(column);
         return ts != null ? ts.toLocalDateTime() : null;

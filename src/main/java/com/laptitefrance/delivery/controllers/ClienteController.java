@@ -8,6 +8,12 @@ import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Cliente;
 import com.laptitefrance.delivery.repositories.ClienteRepository;
 
+/**
+ * CONTROLLER de clientes.
+ *
+ * Encapsula las reglas para buscar y registrar clientes. Importante: aquí viven
+ * las VALIDACIONES (formato de celular, longitud del nombre, duplicados), no en la vista.
+ */
 public class ClienteController {
 
     private final ClienteRepository clienteRepository;
@@ -16,10 +22,20 @@ public class ClienteController {
         this(new ClienteRepository());
     }
 
+    /** Inyección de dependencias: permite pasar un repositorio alternativo (p. ej. en tests). */
     public ClienteController(ClienteRepository clienteRepository) {
         this.clienteRepository = Objects.requireNonNull(clienteRepository);
     }
 
+    /**
+     * Busca un cliente por su número de celular (lo usa la pantalla de venta para
+     * identificar rápido al cliente). Si no existe, lanza NotFoundException.
+     *
+     * @param celular número de celular (String) a buscar; se admite null y se recortan espacios.
+     * @return el objeto {@link Cliente} encontrado (nunca null si retorna).
+     * @throws ValidationException si el celular está vacío.
+     * @throws NotFoundException   si ningún cliente tiene ese celular.
+     */
     public Cliente buscarClientePorCelular(String celular) {
         String cel = celular == null ? "" : celular.trim();
 
@@ -31,6 +47,20 @@ public class ClienteController {
                 .orElseThrow(() -> new NotFoundException("El cliente no existe en la base de datos."));
     }
 
+    /**
+     * Registra un cliente nuevo aplicando todas las reglas de negocio:
+     *   - nombre y celular obligatorios,
+     *   - nombre ≤ 30 caracteres y sin números,
+     *   - celular de exactamente 9 dígitos,
+     *   - el celular no puede estar ya registrado (DuplicateException).
+     * Si todo es válido, genera un ID y lo persiste.
+     *
+     * @param nombre  nombre completo (String) del cliente; máx. 30 caracteres y sin números.
+     * @param celular celular (String) de exactamente 9 dígitos; no puede existir previamente.
+     * @return el objeto {@link Cliente} recién creado, ya con su idCliente asignado.
+     * @throws ValidationException si nombre o celular incumplen el formato esperado.
+     * @throws DuplicateException  si el celular ya pertenece a otro cliente.
+     */
     public Cliente registrarCliente(String nombre, String celular) {
         String nom = nombre == null ? "" : nombre.trim();
         String cel = celular == null ? "" : celular.trim();
