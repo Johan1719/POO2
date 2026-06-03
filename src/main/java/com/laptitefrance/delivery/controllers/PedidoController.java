@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.laptitefrance.delivery.audit.AuditoriaLog;
 import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Cliente;
 import com.laptitefrance.delivery.models.Pedido;
@@ -82,8 +81,7 @@ public class PedidoController {
 
             pedidoRepository.update(pedido);
 
-            // 2) Auditoría
-            AuditoriaLog.registrarAccion("SISTEMA", "Asignado repartidor " + codRepartidor + " a pedido " + codPedido);
+
         }).exceptionally(ex -> {
             System.err.println("\n==========================================");
             System.err.println("❌ ERROR GRAVE AL ASIGNAR REPARTIDOR:");
@@ -107,8 +105,7 @@ public class PedidoController {
         pedido.setEstado(nuevoEstado.trim());
         pedidoRepository.update(pedido);
 
-        String auditoriaActor = (codCajeroActivo == null || codCajeroActivo.isBlank()) ? "SISTEMA" : codCajeroActivo;
-        AuditoriaLog.registrarAccion(auditoriaActor, "Actualizó estado del pedido " + codPedido + " a " + pedido.getEstado());
+
     }
 
     private static void validarDatosGeneracion(

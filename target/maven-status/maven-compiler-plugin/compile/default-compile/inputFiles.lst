@@ -1,4 +1,3 @@
-C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\audit\AuditoriaLog.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\config\DatabaseConfig.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\config\DBConnection.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\controllers\ApiRepartidor.java
@@ -8,9 +7,6 @@ C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefr
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\controllers\PedidoController.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\controllers\ProductoController.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\controllers\TarifaController.java
-C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\events\ConsolaRepartidorObservador.java
-C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\events\ObservadorPedidoEstado.java
-C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\events\PedidoEstadoObservable.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\exceptions\DomainException.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\exceptions\DuplicateException.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\exceptions\NotFoundException.java
