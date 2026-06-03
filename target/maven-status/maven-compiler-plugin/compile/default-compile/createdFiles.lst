@@ -1,0 +1,12 @@
+com\laptitefrance\delivery\repositories\ClienteRepository.class
+com\laptitefrance\delivery\repositories\ProductoRepository.class
+com\laptitefrance\delivery\repositories\IRepositorioBase.class
+com\laptitefrance\delivery\repositories\TelefonoRepository.class
+com\laptitefrance\delivery\repositories\CategoriaRepository.class
+com\laptitefrance\delivery\repositories\TarifaRepository.class
+com\laptitefrance\delivery\repositories\PedidoRepository.class
+com\laptitefrance\delivery\repositories\EmpleadoRepository.class
+com\laptitefrance\delivery\repositories\PedidoProductoRepository.class
+com\laptitefrance\delivery\repositories\RepartidorRepository.class
+com\laptitefrance\delivery\repositories\AsistenteRepository.class
+com\laptitefrance\delivery\repositories\PagoRepository.class

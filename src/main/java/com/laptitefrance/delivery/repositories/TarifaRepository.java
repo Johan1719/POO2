@@ -1,8 +1,5 @@
 package com.laptitefrance.delivery.repositories;
 
-import com.laptitefrance.delivery.config.DBConnection;
-import com.laptitefrance.delivery.models.Tarifa;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,16 +8,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.laptitefrance.delivery.config.DBConnection;
+import com.laptitefrance.delivery.models.Tarifa;
+
 public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override
     public void insert(Tarifa entity) {
-        String sql = "INSERT INTO Tarifa (CodTarifa, NombreZona, PrecioTarifa) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO Tarifa (CodTarifa, NombreZona, PrecioTarifa, TiempoPromedio) VALUES (?, ?, ?, ?)";
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, entity.getCodTarifa());
             ps.setString(2, entity.getNombreZona());
             ps.setDouble(3, entity.getPrecioTarifa());
+            ps.setInt(4, entity.getTiempoPromedio());
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error al insertar Tarifa: " + e.getMessage(), e);
@@ -29,7 +30,7 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override
     public Optional<Tarifa> findById(String id) {
-        String sql = "SELECT CodTarifa, NombreZona, PrecioTarifa FROM Tarifa WHERE CodTarifa = ?";
+        String sql = "SELECT CodTarifa, NombreZona, PrecioTarifa, TiempoPromedio FROM Tarifa WHERE CodTarifa = ?";
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, id);
@@ -39,6 +40,7 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
                 t.setCodTarifa(rs.getString("CodTarifa"));
                 t.setNombreZona(rs.getString("NombreZona"));
                 t.setPrecioTarifa(rs.getDouble("PrecioTarifa"));
+                t.setTiempoPromedio(rs.getInt("TiempoPromedio"));
                 return Optional.of(t);
             }
         } catch (SQLException e) {
@@ -48,7 +50,7 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override
     public List<Tarifa> findAll() {
-        String sql = "SELECT CodTarifa, NombreZona, PrecioTarifa FROM Tarifa";
+        String sql = "SELECT CodTarifa, NombreZona, PrecioTarifa, TiempoPromedio FROM Tarifa";
         List<Tarifa> result = new ArrayList<>();
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -58,6 +60,7 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
                 t.setCodTarifa(rs.getString("CodTarifa"));
                 t.setNombreZona(rs.getString("NombreZona"));
                 t.setPrecioTarifa(rs.getDouble("PrecioTarifa"));
+                t.setTiempoPromedio(rs.getInt("TiempoPromedio"));
                 result.add(t);
             }
             return result;
@@ -68,12 +71,13 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
 
     @Override
     public void update(Tarifa entity) {
-        String sql = "UPDATE Tarifa SET NombreZona = ?, PrecioTarifa = ? WHERE CodTarifa = ?";
+        String sql = "UPDATE Tarifa SET NombreZona = ?, PrecioTarifa = ?, TiempoPromedio = ? WHERE CodTarifa = ?";
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, entity.getNombreZona());
             ps.setDouble(2, entity.getPrecioTarifa());
-            ps.setString(3, entity.getCodTarifa());
+            ps.setInt(3, entity.getTiempoPromedio());
+            ps.setString(4, entity.getCodTarifa());
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error al actualizar Tarifa: " + e.getMessage(), e);
@@ -92,4 +96,3 @@ public class TarifaRepository implements IRepositorioBase<Tarifa, String> {
         }
     }
 }
-

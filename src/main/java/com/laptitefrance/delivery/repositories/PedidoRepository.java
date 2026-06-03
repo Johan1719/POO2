@@ -18,8 +18,9 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
     @Override
     public void insert(Pedido entity) {
         // Asumimos columnas según modelo (y script validado).
-        String sql = "INSERT INTO Pedido (CodPedido, FechaSolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Pedido (CodPedido, FechaSolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, HoraEnvio, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
 
 
         try (Connection con = DBConnection.getConexion();
@@ -31,15 +32,20 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
             ps.setString(4, entity.getEstado());
             setTimestampOrNull(ps, 5, entity.getTiempoEntEstimado());
             setTimestampOrNull(ps, 6, entity.getTiempoEntReal());
-            ps.setString(7, entity.getDireccionEntrega());
-            ps.setString(8, entity.getCodAsistente());
-            ps.setString(9, entity.getCodRepartidor());
-            ps.setString(10, entity.getIdCliente());
-            ps.setString(11, entity.getCodTarifa());
-            ps.setString(12, entity.getCodPago());
 
+            // 7 = HoraEnvio
+            setTimestampOrNull(ps, 7, entity.getHoraEnvio());
+
+            // 8..13 restantes
+            ps.setString(8, entity.getDireccionEntrega());
+            ps.setString(9, entity.getCodAsistente());
+            ps.setString(10, entity.getCodRepartidor());
+            ps.setString(11, entity.getIdCliente());
+            ps.setString(12, entity.getCodTarifa());
+            ps.setString(13, entity.getCodPago());
 
             ps.executeUpdate();
+
         } catch (SQLException e) {
             throw new RuntimeException("Error al insertar Pedido: " + e.getMessage(), e);
         }
@@ -47,8 +53,9 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
 
     @Override
     public Optional<Pedido> findById(String id) {
-        String sql = "SELECT CodPedido, FechaSolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago " +
+        String sql = "SELECT CodPedido, FechaSolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, HoraEnvio, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago " +
                 "FROM Pedido WHERE CodPedido = ?";
+
 
 
         try (Connection con = DBConnection.getConexion();
@@ -66,7 +73,9 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
                 p.setEstado(rs.getString("Estado"));
                 p.setTiempoEntEstimado(getTimestampAsLocalDateTime(rs, "TiempoEntEstimado"));
                 p.setTiempoEntReal(getTimestampAsLocalDateTime(rs, "TiempoEntReal"));
+                p.setHoraEnvio(getTimestampAsLocalDateTime(rs, "HoraEnvio"));
                 p.setDireccionEntrega(rs.getString("DireccionEntrega"));
+
                 p.setCodAsistente(rs.getString("CodAsistente"));
                 p.setCodRepartidor(rs.getString("CodRepartidor"));
                 p.setIdCliente(rs.getString("IDCliente"));
@@ -82,7 +91,8 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
 
     @Override
     public List<Pedido> findAll() {
-        String sql = "SELECT CodPedido, FechaSolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago FROM Pedido";
+        String sql = "SELECT CodPedido, FechaSolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, HoraEnvio, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago FROM Pedido";
+
 
         List<Pedido> result = new ArrayList<>();
 
@@ -98,7 +108,9 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
                 p.setEstado(rs.getString("Estado"));
                 p.setTiempoEntEstimado(getTimestampAsLocalDateTime(rs, "TiempoEntEstimado"));
                 p.setTiempoEntReal(getTimestampAsLocalDateTime(rs, "TiempoEntReal"));
+                p.setHoraEnvio(getTimestampAsLocalDateTime(rs, "HoraEnvio"));
                 p.setDireccionEntrega(rs.getString("DireccionEntrega"));
+
                 p.setCodAsistente(rs.getString("CodAsistente"));
                 p.setCodRepartidor(rs.getString("CodRepartidor"));
                 p.setIdCliente(rs.getString("IDCliente"));
@@ -116,8 +128,9 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
 
     @Override
     public void update(Pedido entity) {
-        String sql = "UPDATE Pedido SET FechaSolicitud = ?, MontoPedido = ?, Estado = ?, TiempoEntEstimado = ?, TiempoEntReal = ?, DireccionEntrega = ?, CodAsistente = ?, CodRepartidor = ?, IDCliente = ?, CodTarifa = ?, CodPago = ? " +
+        String sql = "UPDATE Pedido SET FechaSolicitud = ?, MontoPedido = ?, Estado = ?, TiempoEntEstimado = ?, TiempoEntReal = ?, HoraEnvio = ?, DireccionEntrega = ?, CodAsistente = ?, CodRepartidor = ?, IDCliente = ?, CodTarifa = ?, CodPago = ? " +
                 "WHERE CodPedido = ?";
+
 
 
         try (Connection con = DBConnection.getConexion();
@@ -128,13 +141,17 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
             ps.setString(3, entity.getEstado());
             setTimestampOrNull(ps, 4, entity.getTiempoEntEstimado());
             setTimestampOrNull(ps, 5, entity.getTiempoEntReal());
-            ps.setString(6, entity.getDireccionEntrega());
-            ps.setString(7, entity.getCodAsistente());
-            ps.setString(8, entity.getCodRepartidor());
-            ps.setString(9, entity.getIdCliente());
-            ps.setString(10, entity.getCodTarifa());
-            ps.setString(11, entity.getCodPago());
-            ps.setString(12, entity.getCodPedido());
+            setTimestampOrNull(ps, 6, entity.getHoraEnvio());
+            ps.setString(7, entity.getDireccionEntrega());
+            ps.setString(8, entity.getCodAsistente());
+            ps.setString(9, entity.getCodRepartidor());
+
+            ps.setString(10, entity.getIdCliente());
+
+            ps.setString(11, entity.getCodTarifa());
+            ps.setString(12, entity.getCodPago());
+            ps.setString(13, entity.getCodPedido());
+
 
 
             ps.executeUpdate();
