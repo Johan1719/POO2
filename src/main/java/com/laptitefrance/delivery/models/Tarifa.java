@@ -4,14 +4,16 @@ public class Tarifa {
     private String codTarifa; // CHAR(3)
     private String nombreZona; // NombreZona VARCHAR(30)
     private double precioTarifa;
+    private int tiempoPromedio;
 
     public Tarifa() {
     }
 
-    public Tarifa(String codTarifa, String nombreZona, double precioTarifa) {
+    public Tarifa(String codTarifa, String nombreZona, double precioTarifa, int tiempoPromedio) {
         this.codTarifa = codTarifa;
         this.nombreZona = nombreZona;
         this.precioTarifa = precioTarifa;
+        this.tiempoPromedio = tiempoPromedio;
     }
 
     public String getCodTarifa() {
@@ -38,9 +40,16 @@ public class Tarifa {
         this.precioTarifa = precioTarifa;
     }
 
+    public int getTiempoPromedio() {
+        return tiempoPromedio;
+    }
+
+    public void setTiempoPromedio(int tiempoPromedio) {
+        this.tiempoPromedio = tiempoPromedio;
+    }
+
     @Override
     public String toString() {
         return codTarifa + " - " + nombreZona + " (S/ " + precioTarifa + ")";
     }
 }
-

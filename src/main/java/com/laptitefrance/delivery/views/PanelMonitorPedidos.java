@@ -61,12 +61,13 @@ public class PanelMonitorPedidos extends JPanel {
         JPanel panelCentro = new JPanel(new BorderLayout());
         panelCentro.setBorder(BorderFactory.createTitledBorder("Listado de Pedidos"));
 
-        modeloPedidos = new DefaultTableModel(new Object[]{"Código Pedido", "ID Cliente", "Monto Total", "Estado"}, 0) {
+        modeloPedidos = new DefaultTableModel(new Object[]{"Código Pedido", "ID Cliente", "Monto Total", "Estado", "Hora Registro"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
+
 
         tablaPedidos = new JTable(modeloPedidos);
         tablaPedidos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -103,7 +104,8 @@ public class PanelMonitorPedidos extends JPanel {
                         p.getCodPedido(),
                         p.getIdCliente(),
                         String.format("S/ %.2f", p.getMontoPedido()),
-                        p.getEstado()
+                        p.getEstado(),
+                        (p.getFechaSolicitud() != null ? p.getFechaSolicitud().toString() : "")
                 });
             }
         } catch (Exception ex) {

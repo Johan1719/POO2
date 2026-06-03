@@ -1,29 +1,117 @@
 package com.laptitefrance.delivery.controllers;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import com.laptitefrance.delivery.audit.AuditoriaLog;
 import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Cliente;
 import com.laptitefrance.delivery.models.Pedido;
-import com.laptitefrance.delivery.services.PedidoAsyncService;
-import com.laptitefrance.delivery.services.PedidoService;
+import com.laptitefrance.delivery.repositories.IRepositorioBase;
+import com.laptitefrance.delivery.repositories.PedidoRepository;
 
 public class PedidoController {
 
-    private final PedidoService pedidoService;
-    private final PedidoAsyncService pedidoAsyncService;
-    
+    private final IRepositorioBase<Pedido, String> pedidoRepository;
+
     // 👇 ESTADO INYECTADO: El controlador sabe quién opera la caja
     private final String codCajeroActivo;
 
     public PedidoController(String codCajeroActivo) {
-        this.pedidoService = new PedidoService();
-        this.pedidoAsyncService = new PedidoAsyncService(this.pedidoService);
+        this(codCajeroActivo, new PedidoRepository());
+    }
+
+    public PedidoController(String codCajeroActivo, IRepositorioBase<Pedido, String> pedidoRepository) {
+        this.pedidoRepository = Objects.requireNonNull(pedidoRepository);
         this.codCajeroActivo = codCajeroActivo;
     }
 
-    // 👇 VISTA TONTA: Ya no pedimos el 'codAsistente' en los parámetros
+    // 👇 VISTA TONTA: Ya no existe capa Service.
     public void generarPedido(
+            Cliente cliente,
+            int cantidadProductosEnCarrito,
+            double total,
+            String direccionEntrega,
+            String codTarifa,
+            String codPago
+    ) {
+        validarDatosGeneracion(cliente, cantidadProductosEnCarrito, total, direccionEntrega, codTarifa, codPago);
+
+        Pedido pedido = ensamblarNuevoPedido(cliente, total, direccionEntrega, codTarifa, codPago, this.codCajeroActivo);
+        pedidoRepository.insert(pedido);
+    }
+
+    public List<Pedido> listarPedidos() {
+        return pedidoRepository.findAll();
+    }
+
+    public List<Pedido> filtrarPedidosPorEstado(String estado) {
+        if (estado == null || estado.trim().isEmpty() || estado.equalsIgnoreCase("TODOS")) {
+            return listarPedidos();
+        }
+
+        String estadoNormalizado = estado.trim();
+        return pedidoRepository.findAll().stream()
+                .filter(Objects::nonNull)
+                .filter(p -> estadoNormalizado.equalsIgnoreCase(p.getEstado()))
+                .sorted(Comparator.comparing(Pedido::getFechaSolicitud, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .collect(Collectors.toList());
+    }
+
+    public void asignarRepartidor(String codPedido, String codRepartidor) {
+        if (codPedido == null || codPedido.trim().isEmpty()) {
+            throw new ValidationException("El código del pedido no puede estar vacío.");
+        }
+        if (codRepartidor == null || codRepartidor.trim().isEmpty()) {
+            throw new ValidationException("El código del repartidor no puede estar vacío.");
+        }
+
+        // Mantener comportamiento asíncrono, pero sin Service.
+        CompletableFuture.runAsync(() -> {
+            // 1) Actualizar estado y datos del pedido en BD si aplica.
+            Pedido pedido = pedidoRepository.findById(codPedido)
+                    .orElseThrow(() -> new ValidationException("No existe Pedido con codPedido=" + codPedido));
+
+            pedido.setEstado("EN CAMINO");
+            pedido.setCodRepartidor(codRepartidor);
+            pedido.setTiempoEntEstimado(pedido.getTiempoEntEstimado());
+
+            pedidoRepository.update(pedido);
+
+            // 2) Auditoría
+            AuditoriaLog.registrarAccion("SISTEMA", "Asignado repartidor " + codRepartidor + " a pedido " + codPedido);
+        }).exceptionally(ex -> {
+            System.err.println("\n==========================================");
+            System.err.println("❌ ERROR GRAVE AL ASIGNAR REPARTIDOR:");
+            ex.printStackTrace();
+            System.err.println("==========================================\n");
+            return null;
+        });
+    }
+
+    public void actualizarEstadoPedido(String codPedido, String nuevoEstado) {
+        if (codPedido == null || codPedido.trim().isEmpty()) {
+            throw new ValidationException("Debe seleccionar un pedido válido.");
+        }
+        if (nuevoEstado == null || nuevoEstado.trim().isEmpty()) {
+            throw new ValidationException("Debe proporcionar un estado válido.");
+        }
+
+        Pedido pedido = pedidoRepository.findById(codPedido.trim())
+                .orElseThrow(() -> new ValidationException("No existe Pedido con codPedido=" + codPedido));
+
+        pedido.setEstado(nuevoEstado.trim());
+        pedidoRepository.update(pedido);
+
+        String auditoriaActor = (codCajeroActivo == null || codCajeroActivo.isBlank()) ? "SISTEMA" : codCajeroActivo;
+        AuditoriaLog.registrarAccion(auditoriaActor, "Actualizó estado del pedido " + codPedido + " a " + pedido.getEstado());
+    }
+
+    private static void validarDatosGeneracion(
             Cliente cliente,
             int cantidadProductosEnCarrito,
             double total,
@@ -49,44 +137,40 @@ public class PedidoController {
         if (codPago == null || codPago.trim().isEmpty()) {
             throw new ValidationException("Debe seleccionar un método de pago.");
         }
-
-        // --- TRUCO TEMPORAL DE DEBUGGING ---
-        // 1. Apagamos el hilo asíncrono comentando esta línea:
-        // pedidoAsyncService.crearPedidoAsync(cliente, total, direccionEntrega, codTarifa, codPago, this.codCajeroActivo);
-        
-        // 2. Encendemos el guardado directo (Síncrono) inyectando nuestro propio estado (this.codCajeroActivo):
-        Pedido pedido = pedidoService.ensamblarNuevoPedido(cliente, total, direccionEntrega, codTarifa, codPago, this.codCajeroActivo);
-        pedidoService.guardar(pedido);
     }
 
-    public List<Pedido> listarPedidos() {
-        return pedidoService.obtenerTodosLosPedidos();
-    }
+    private static Pedido ensamblarNuevoPedido(
+            Cliente cliente,
+            double total,
+            String direccionEntrega,
+            String codTarifa,
+            String codPago,
+            String codAsistente
+    ) {
+        Pedido pedido = new Pedido();
 
-    public List<Pedido> filtrarPedidosPorEstado(String estado) {
-        if (estado == null || estado.trim().isEmpty() || estado.equalsIgnoreCase("TODOS")) {
-            return listarPedidos();
-        }
-        return pedidoService.obtenerPedidosPorEstadoOrdenados(estado.trim());
-    }
+        // 1. Código único
+        pedido.setCodPedido(String.format("P%04d", (int) (Math.random() * 10000)));
 
-    public void asignarRepartidor(String codPedido, String codRepartidor) {
-        if (codPedido == null || codPedido.trim().isEmpty()) {
-            throw new ValidationException("El código del pedido no puede estar vacío.");
-        }
-        if (codRepartidor == null || codRepartidor.trim().isEmpty()) {
-            throw new ValidationException("El código del repartidor no puede estar vacío.");
-        }
-        pedidoAsyncService.asignarRepartidorAsincrono(codPedido, codRepartidor);
-    }
+        // 2. Datos básicos
+        pedido.setIdCliente(cliente.getIdCliente());
+        pedido.setMontoPedido(total);
+        pedido.setEstado("EN ESPERA");
+        pedido.setFechaSolicitud(LocalDateTime.now());
 
-    public void actualizarEstadoPedido(String codPedido, String nuevoEstado) {
-        if (codPedido == null || codPedido.trim().isEmpty()) {
-            throw new ValidationException("Debe seleccionar un pedido válido.");
-        }
-        if (nuevoEstado == null || nuevoEstado.trim().isEmpty()) {
-            throw new ValidationException("Debe proporcionar un estado válido.");
-        }
-        pedidoService.actualizarEstado(codPedido, nuevoEstado.trim());
+        // 3. Dirección
+        pedido.setDireccionEntrega(direccionEntrega);
+
+        // 4. FKs y actor
+        pedido.setCodAsistente(codAsistente);
+        pedido.setCodTarifa(codTarifa);
+        pedido.setCodPago(codPago);
+
+        // 5. Repartidor/tiempos aún desconocidos
+        pedido.setCodRepartidor(null);
+        pedido.setTiempoEntEstimado(null);
+        pedido.setTiempoEntReal(null);
+
+        return pedido;
     }
 }

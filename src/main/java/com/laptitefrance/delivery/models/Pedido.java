@@ -10,6 +10,9 @@ public class Pedido {
     private LocalDateTime tiempoEntEstimado;
     private LocalDateTime tiempoEntReal;
 
+    // Hora en la que se despacha (asigna repartidor)
+    private LocalDateTime horaEnvio;
+
     // FK actuales
     private String codAsistente; // FK -> Asistente(CodAsistente)
     private String codRepartidor; // FK -> Repartidor(CodRepartidor)
@@ -137,6 +140,15 @@ public class Pedido {
     public void setDireccionEntrega(String direccionEntrega) {
         this.direccionEntrega = direccionEntrega;
     }
+
+    public LocalDateTime getHoraEnvio() {
+        return horaEnvio;
+    }
+
+    public void setHoraEnvio(LocalDateTime horaEnvio) {
+        this.horaEnvio = horaEnvio;
+    }
+
 
     /**
      * Builder (patrón creacional) para construir un Pedido de forma limpia.
