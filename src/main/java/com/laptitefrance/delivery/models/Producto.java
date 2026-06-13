@@ -6,6 +6,8 @@ public class Producto {
     private Short stock; // SMALLINT
     private double precioProd; // FLOAT
     private String codCat; // FK -> Categoria(CodCat)
+    private boolean activo; // BIT
+
 
     public Producto() {
     }
@@ -16,7 +18,18 @@ public class Producto {
         this.stock = stock;
         this.precioProd = precioProd;
         this.codCat = codCat;
+        this.activo = true;
     }
+
+    public Producto(String codProducto, String nombreProd, Short stock, double precioProd, String codCat, boolean activo) {
+        this.codProducto = codProducto;
+        this.nombreProd = nombreProd;
+        this.stock = stock;
+        this.precioProd = precioProd;
+        this.codCat = codCat;
+        this.activo = activo;
+    }
+
 
     public String getCodProducto() {
         return codProducto;
@@ -57,5 +70,14 @@ public class Producto {
     public void setCodCat(String codCat) {
         this.codCat = codCat;
     }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
+    }
 }
+
 

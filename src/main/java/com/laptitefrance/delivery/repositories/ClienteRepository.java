@@ -17,13 +17,12 @@ public class ClienteRepository implements IRepositorioBase<Cliente, String> {
 
     @Override
     public void insert(Cliente entity) {
-        String sql = "INSERT INTO Cliente (IDCliente, FechaRegistro, NombreCliente, Nrocelular) VALUES (?, GETDATE(), ?, ?)";
+        String sql = "INSERT INTO Cliente (FechaRegistro, NombreCliente, Nrocelular) VALUES (GETDATE(), ?, ?)";
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, entity.getIdCliente());
-            ps.setString(2, entity.getNombreCliente());
-            ps.setString(3, entity.getNrocelular());
+            ps.setString(1, entity.getNombreCliente());
+            ps.setString(2, entity.getNrocelular());
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error al insertar Cliente: " + e.getMessage(), e);
@@ -108,6 +107,8 @@ public class ClienteRepository implements IRepositorioBase<Cliente, String> {
 
     // ⭐ NUEVO MÉTODO: Buscar por Celular para la vista del Asistente ⭐
     public Optional<Cliente> findByTelefono(String celular) {
+
+
         String sql = "SELECT IDCliente, FechaRegistro, NombreCliente, Nrocelular FROM Cliente WHERE Nrocelular = ?";
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {

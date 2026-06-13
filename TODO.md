@@ -1,22 +1,26 @@
-# TODO - Migración BD LaPtiteFranceDB
+# TODO - Panel Clientes/Inventario (paginado + corrección controllers)
 
-## Paso 1 (HECHO)
-- Actualizar `models/Pedido.java` para incluir:
-  - `codAsistente`
-  - `direccionEntrega`
-  - getters/setters y Builder.
+## 1) Arreglar llamados a métodos inexistentes
+- [x] Actualizar `ClienteController` con:
+  - [x] `listarClientes(String celular)`
+  - [x] `actualizarCelular(String idCliente, String nuevoCelular)`
+- [x] Actualizar `ProductoController` con:
+  - [x] `listarProductos(String filtro)`
+  - [x] `actualizarStock(String codProducto, int nuevoStock)`
 
-## Paso 2 (HECHO)
-- Actualizar `repositories/PedidoRepository.java` (SQL INSERT/SELECT/UPDATE) para columnas nuevas:
-  - `DireccionEntrega`
-  - `CodAsistente`
+## 2) Implementar paginado (pageSize = 10)
+- [x] Actualizar `ClienteController` con:
+  - [x] `listarClientesPaginado(String celular, int page, int pageSize)`
+  - [x] `contarClientesFiltrados(String celular)`
+- [x] Actualizar `ProductoController` con:
+  - [x] `listarProductosPaginado(String filtro, int page, int pageSize)`
+  - [x] `contarProductosFiltrados(String filtro)`
 
-## Paso 3 (EN PROGRESO)
-- Actualizar `services/PedidoService.java` para llenar los campos requeridos por la BD si el flujo UI aún no los define.
+## 3) Implementar paginado en la UI
+- [x] Actualizar `PanelClientes` para mostrar paginador (Anterior/Siguiente, página actual/total) y usar métodos paginados.
+- [x] Actualizar `PanelInventario` para mostrar paginador opcional (igual estilo) y usar métodos paginados.
+- [x] Activar pestañas Clientes/Inventario en `DashboardAsistenteView` (de placeholders a vistas reales)
 
-## Paso 4
-- Ejecutar compilación (`mvn test` / `mvn package`) para listar fallos restantes.
-
-## Paso 5
-- Eliminar o corregir código obsoleto (tablas `Atencion`/`Direccion`) según falle la compilación.
+## 4) Prueba / compilación
+- [ ] Correr `mvn test` o `mvn -q package` para verificar que compila sin errores.
 

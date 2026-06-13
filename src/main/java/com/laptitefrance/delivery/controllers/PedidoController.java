@@ -146,8 +146,10 @@ public class PedidoController {
     ) {
         Pedido pedido = new Pedido();
 
-        // 1. Código único
-        pedido.setCodPedido(String.format("P%04d", (int) (Math.random() * 10000)));
+        // 1. Código único -> se autogenera en SQL mediante SEQUENCE/DEFAULT.
+        // Importante: el repository insert NO debe setear CodPedido manualmente.
+        pedido.setCodPedido(null);
+
 
         // 2. Datos básicos
         pedido.setIdCliente(cliente.getIdCliente());

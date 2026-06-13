@@ -146,6 +146,12 @@ public class PanelNuevaVenta extends JPanel {
         lblTotal.setFont(new Font("Arial", Font.BOLD, 18));
         panelTotal.add(lblTotal);
 
+        JButton btnActualizarStock = new JButton("🔄 Actualizar");
+        btnActualizarStock.setBackground(new Color(52, 152, 219));
+        btnActualizarStock.setForeground(Color.WHITE);
+        btnActualizarStock.addActionListener(e -> actualizarMenuYCarrito());
+        panelTotal.add(btnActualizarStock);
+
         JButton btnGenerarPedido = new JButton("✅ Generar Pedido");
         btnGenerarPedido.setBackground(new Color(46, 204, 113));
         btnGenerarPedido.setForeground(Color.WHITE);
@@ -154,6 +160,7 @@ public class PanelNuevaVenta extends JPanel {
 
         panelSur.add(panelTotal, BorderLayout.SOUTH);
         add(panelSur, BorderLayout.SOUTH);
+
     }
 
     private void cargarMenu() {
@@ -342,4 +349,21 @@ public class PanelNuevaVenta extends JPanel {
         actualizarTotal();
         tablaMenu.clearSelection();
     }
+
+    private void actualizarMenuYCarrito() {
+        try {
+            // Recarga menú desde BD (stock puede haber cambiado)
+            cargarMenu();
+
+            // Limpia carrito para evitar inconsistencias (cantidades/precios ya no coinciden con stock)
+            modeloCarrito.setRowCount(0);
+            totalCarrito = 0.0;
+            actualizarTotal();
+            JOptionPane.showMessageDialog(this, "Menú actualizado y carrito limpiado.", "Actualizar", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }
+

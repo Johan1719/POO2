@@ -1,6 +1,9 @@
 package com.laptitefrance.delivery.views;
 
+import com.laptitefrance.delivery.controllers.ClienteController;
+import com.laptitefrance.delivery.controllers.ProductoController;
 import com.laptitefrance.delivery.controllers.PedidoController;
+
 import com.laptitefrance.delivery.models.Empleado;
 
 import javax.swing.*;
@@ -41,9 +44,13 @@ public class DashboardAsistenteView extends JFrame {
         PanelMonitorPedidos panelMonitorPedidos = new PanelMonitorPedidos(pedidoControllerGlobal);
         tabbedPane.addTab("📺 Monitor de Pedidos", panelMonitorPedidos);
 
-        // Pestañas futuras (Placeholders para próximas tareas)
-        tabbedPane.addTab("👥 Clientes", new JPanel());
-        tabbedPane.addTab("📦 Inventario", new JPanel());
+        // Pestañas Clientes / Inventario (YA implementadas)
+        PanelClientes panelClientes = new PanelClientes(new ClienteController());
+        tabbedPane.addTab("👥 Clientes", panelClientes);
+
+        PanelInventario panelInventario = new PanelInventario(new ProductoController());
+        tabbedPane.addTab("📦 Inventario", panelInventario);
+
 
         add(tabbedPane, BorderLayout.CENTER);
     }

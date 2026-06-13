@@ -146,7 +146,9 @@ public class PanelMonitorPedidos extends JPanel {
         String codPedido = (String) modeloPedidos.getValueAt(filaSeleccionada, 0);
         String estadoActual = (String) modeloPedidos.getValueAt(filaSeleccionada, 3);
 
-        String[] opciones = {"PREPARANDO", "EN CAMINO", "ENTREGADO", "CANCELADO"};
+        // Las opciones deben ser compatibles con los estados que ya maneja el filtrado.
+        String[] opciones = {"EN ESPERA", "EN CAMINO", "ENTREGADO", "CANCELADO"};
+
         String nuevoEstado = (String) JOptionPane.showInputDialog(this, "Modifique el estado del pedido:", "Editar Pedido " + codPedido, JOptionPane.PLAIN_MESSAGE, null, opciones, estadoActual);
 
         if (nuevoEstado != null && !nuevoEstado.equals(estadoActual)) {

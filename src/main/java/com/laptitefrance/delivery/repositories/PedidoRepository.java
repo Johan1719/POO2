@@ -18,31 +18,32 @@ public class PedidoRepository implements IRepositorioBase<Pedido, String> {
     @Override
     public void insert(Pedido entity) {
         // Asumimos columnas según modelo (y script validado).
-        String sql = "INSERT INTO Pedido (CodPedido, FechaSolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, HoraEnvio, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Pedido (FechaSolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, HoraEnvio, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
 
 
 
         try (Connection con = DBConnection.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, entity.getCodPedido());
-            setTimestampOrNull(ps, 2, entity.getFechaSolicitud());
-            ps.setDouble(3, entity.getMontoPedido());
-            ps.setString(4, entity.getEstado());
-            setTimestampOrNull(ps, 5, entity.getTiempoEntEstimado());
-            setTimestampOrNull(ps, 6, entity.getTiempoEntReal());
+            setTimestampOrNull(ps, 1, entity.getFechaSolicitud());
+            ps.setDouble(2, entity.getMontoPedido());
+            ps.setString(3, entity.getEstado());
+            setTimestampOrNull(ps, 4, entity.getTiempoEntEstimado());
+            setTimestampOrNull(ps, 5, entity.getTiempoEntReal());
 
-            // 7 = HoraEnvio
-            setTimestampOrNull(ps, 7, entity.getHoraEnvio());
+            // 6 = HoraEnvio
+            setTimestampOrNull(ps, 6, entity.getHoraEnvio());
 
-            // 8..13 restantes
-            ps.setString(8, entity.getDireccionEntrega());
-            ps.setString(9, entity.getCodAsistente());
-            ps.setString(10, entity.getCodRepartidor());
-            ps.setString(11, entity.getIdCliente());
-            ps.setString(12, entity.getCodTarifa());
-            ps.setString(13, entity.getCodPago());
+            // 7..12 restantes
+            ps.setString(7, entity.getDireccionEntrega());
+            ps.setString(8, entity.getCodAsistente());
+            ps.setString(9, entity.getCodRepartidor());
+            ps.setString(10, entity.getIdCliente());
+            ps.setString(11, entity.getCodTarifa());
+            ps.setString(12, entity.getCodPago());
+
 
             ps.executeUpdate();
 
