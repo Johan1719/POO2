@@ -8,6 +8,8 @@ import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Producto;
 import com.laptitefrance.delivery.repositories.IRepositorioBase;
 import com.laptitefrance.delivery.repositories.ProductoRepository;
+import com.laptitefrance.delivery.repositories.ProductoRepositoryPagination;
+
 
 
 public class ProductoController {
@@ -51,27 +53,13 @@ public class ProductoController {
     }
 
     public List<Producto> listarProductosPaginado(String filtro, int page, int pageSize) {
-        int p = PaginationSupport.normalizePage(page);
-        int ps = PaginationSupport.normalizePageSize(pageSize);
+        int p = Math.max(1, page);
+        int ps = Math.max(1, pageSize);
 
-        String f = filtro == null ? "" : filtro.trim();
-        return productoRepository.findAll().stream()
-                .filter(pObj -> pObj != null)
-                .filter(pObj -> {
-                    if (f.isEmpty()) return true;
-                    String cod = pObj.getCodProducto() == null ? "" : pObj.getCodProducto();
-                    String nom = pObj.getNombreProd() == null ? "" : pObj.getNombreProd();
-                    return cod.equalsIgnoreCase(f) || nom.toLowerCase().contains(f.toLowerCase());
-                })
-                .sorted((a, b) -> {
-                    String na = a.getNombreProd() == null ? "" : a.getNombreProd();
-                    String nb = b.getNombreProd() == null ? "" : b.getNombreProd();
-                    return na.compareToIgnoreCase(nb);
-                })
-                .skip((long) (p - 1) * ps)
-                .limit(ps)
-                .collect(Collectors.toList());
+        // Paginación real en BD (SQL Server con OFFSET/FETCH)
+        return ProductoRepositoryPagination.listarProductosPaginado(filtro, p, ps);
     }
+
 
     public int contarProductosFiltrados(String filtro) {
         String f = filtro == null ? "" : filtro.trim();

@@ -11,9 +11,8 @@ import com.laptitefrance.delivery.models.Cliente;
 import com.laptitefrance.delivery.repositories.ClienteRepository;
 import com.laptitefrance.delivery.repositories.ClienteRepositoryPagination;
 
-
-
 public class ClienteController {
+
 
     private final ClienteRepository clienteRepository;
 
@@ -71,7 +70,11 @@ public class ClienteController {
         nuevoCliente.setNrocelular(cel);
 
         clienteRepository.insert(nuevoCliente);
-        return nuevoCliente;
+
+        // Recuperar el ID autogenerado por la BD (SEQUENCE/DEFAULT) para que no llegue null al Pedido.
+        return clienteRepository.findByTelefono(cel)
+                .orElseThrow(() -> new NotFoundException("No se pudo recuperar el cliente recién creado por celular=" + cel));
+
 
     }
 
@@ -82,23 +85,14 @@ public class ClienteController {
     }
 
     public java.util.List<Cliente> listarClientesPaginado(String celular, int page, int pageSize) {
-        int p = PaginationSupport.normalizePage(page);
-        int ps = PaginationSupport.normalizePageSize(pageSize);
+        int p = Math.max(1, page);
+        int ps = Math.max(1, pageSize);
 
-        String cel = celular == null ? "" : celular.trim();
-        return clienteRepository.findAll().stream()
-                .filter(Objects::nonNull)
-                .filter(c -> cel.isEmpty() || (c.getNrocelular() != null && c.getNrocelular().equals(cel)))
-                .sorted((a, b) -> {
-                    if (a.getFechaRegistro() == null && b.getFechaRegistro() == null) return 0;
-                    if (a.getFechaRegistro() == null) return 1;
-                    if (b.getFechaRegistro() == null) return -1;
-                    return b.getFechaRegistro().compareTo(a.getFechaRegistro());
-                })
-                .skip((long) (p - 1) * ps)
-                .limit(ps)
-                .collect(java.util.stream.Collectors.toList());
+
+        // Paginación REAL en BD: usa OFFSET/FETCH y evita traer toda la tabla a RAM.
+        return ClienteRepositoryPagination.listarClientesPaginado(celular, p, ps);
     }
+
 
     public int contarClientesFiltrados(String celular) {
         String cel = celular == null ? "" : celular.trim();

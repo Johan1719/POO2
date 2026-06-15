@@ -1,7 +1,7 @@
-# TODO - Panel Clientes/Inventario (paginado + corrección controllers)
+# TODO
 
-## 1) Arreglar llamados a métodos inexistentes
-- [x] Actualizar `ClienteController` con:
+- [ ] 1) Confirmar raíz del problema: `ClienteController.registrarCliente()` no llena `idCliente` tras insert.
+- [ ] 2) Corregir `ClienteController.registrarCliente()` para recargar el cliente insertado por `Nrocelular` y retornar instancia con `idCliente`.
   - [x] `listarClientes(String celular)`
   - [x] `actualizarCelular(String idCliente, String nuevoCelular)`
 - [x] Actualizar `ProductoController` con:
