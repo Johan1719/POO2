@@ -18,14 +18,17 @@ import javax.swing.table.DefaultTableModel;
 
 import com.laptitefrance.delivery.controllers.PedidoController;
 import com.laptitefrance.delivery.exceptions.ValidationException;
-import com.laptitefrance.delivery.models.Pedido;
+
 
 public class PanelMonitorPedidos extends JPanel {
 
     // 👇 Controlador inyectado
     private final PedidoController pedidoController;
     
+    private PaginatorPanel paginator;
+    
     private JTable tablaPedidos;
+
     private DefaultTableModel modeloPedidos;
     private JComboBox<String> cbxFiltroEstado;
 
@@ -61,7 +64,8 @@ public class PanelMonitorPedidos extends JPanel {
         JPanel panelCentro = new JPanel(new BorderLayout());
         panelCentro.setBorder(BorderFactory.createTitledBorder("Listado de Pedidos"));
 
-        modeloPedidos = new DefaultTableModel(new Object[]{"Código Pedido", "ID Cliente", "Monto Total", "Estado", "Hora Registro"}, 0) {
+        modeloPedidos = new DefaultTableModel(new Object[]{"Código Pedido", "Nombre Cliente", "Monto Total", "Estado", "Repartidor", "Tiempo Aprox", "Hora Registro"}, 0) {
+
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -76,42 +80,77 @@ public class PanelMonitorPedidos extends JPanel {
         panelCentro.add(new JScrollPane(tablaPedidos), BorderLayout.CENTER);
         add(panelCentro, BorderLayout.CENTER);
 
-        // ================= PANEL INFERIOR (Acciones) =================
-        JPanel panelSur = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // ================= PANEL INFERIOR (Paginación + Acciones) =================
+        JPanel panelSur = new JPanel(new BorderLayout());
+
+        // Paginador reutilizable
+        this.paginator = new PaginatorPanel(1, 1, newPage -> {
+            paginaActual = newPage;
+            cargarPedidos((String) cbxFiltroEstado.getSelectedItem());
+        });
+        panelSur.add(this.paginator, BorderLayout.CENTER);
+
+
+        // Acciones
+        JPanel panelAcciones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
         JButton btnAsignarRepartidor = new JButton("🛵 Asignar Repartidor");
         btnAsignarRepartidor.setBackground(new Color(52, 152, 219));
         btnAsignarRepartidor.setForeground(Color.WHITE);
         btnAsignarRepartidor.addActionListener(e -> modalAsignarRepartidor());
-        panelSur.add(btnAsignarRepartidor);
+        panelAcciones.add(btnAsignarRepartidor);
 
         JButton btnEditarPedido = new JButton("📝 Editar Estado");
         btnEditarPedido.setBackground(new Color(243, 156, 18));
         btnEditarPedido.setForeground(Color.WHITE);
         btnEditarPedido.addActionListener(e -> modalEditarPedido());
-        panelSur.add(btnEditarPedido);
+        panelAcciones.add(btnEditarPedido);
+
+        panelSur.add(panelAcciones, BorderLayout.EAST);
 
         add(panelSur, BorderLayout.SOUTH);
     }
 
+
+
+    private int paginaActual = 1;
+    private final int pageSize = 10;
+
     private void cargarPedidos(String estado) {
-        modeloPedidos.setRowCount(0); 
+        modeloPedidos.setRowCount(0);
         try {
-            List<Pedido> pedidos = pedidoController.filtrarPedidosPorEstado(estado);
-            
-            for (Pedido p : pedidos) {
+            int total = pedidoController.contarPedidosMonitorFiltrados(estado);
+            int totalPaginas = (int) Math.ceil(total / (double) pageSize);
+            if (totalPaginas <= 0) totalPaginas = 1;
+            if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+            if (paginaActual < 1) paginaActual = 1;
+            if (paginator != null) {
+                paginator.setTotalPages(totalPaginas);
+                paginator.setPage(paginaActual);
+            }
+
+
+            List<com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.PedidoMonitorRow> filas =
+                    pedidoController.listarPedidosMonitorPaginado(estado, paginaActual, pageSize);
+
+            for (com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.PedidoMonitorRow row : filas) {
                 modeloPedidos.addRow(new Object[]{
-                        p.getCodPedido(),
-                        p.getIdCliente(),
-                        String.format("S/ %.2f", p.getMontoPedido()),
-                        p.getEstado(),
-                        (p.getFechaSolicitud() != null ? p.getFechaSolicitud().toString() : "")
+                        row.codPedido,
+                        row.nombreCliente,
+                        String.format("S/ %.2f", row.montoPedido),
+                        row.estado,
+                        row.nombreRepartidor,
+                        (row.tiempoEntEstimado != null ? row.tiempoEntEstimado.toString() : ""),
+                        (row.fechaSolicitud != null ? row.fechaSolicitud.toString() : "")
                 });
             }
+
         } catch (Exception ex) {
             mostrarError("Error al cargar los pedidos: " + ex.getMessage());
         }
     }
+
+
 
     private void modalAsignarRepartidor() {
         int filaSeleccionada = tablaPedidos.getSelectedRow();

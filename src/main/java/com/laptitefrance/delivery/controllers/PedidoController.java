@@ -49,6 +49,7 @@ public class PedidoController {
     }
 
     public List<Pedido> filtrarPedidosPorEstado(String estado) {
+        // Se mantiene compatibilidad con el panel viejo (List<Pedido>).
         if (estado == null || estado.trim().isEmpty() || estado.equalsIgnoreCase("TODOS")) {
             return listarPedidos();
         }
@@ -60,6 +61,17 @@ public class PedidoController {
                 .sorted(Comparator.comparing(Pedido::getFechaSolicitud, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .collect(Collectors.toList());
     }
+
+    // ===================== Paginación real para el monitor =====================
+    public List<com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.PedidoMonitorRow> listarPedidosMonitorPaginado(String estado, int page, int pageSize) {
+        return com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.listarPedidosPaginado(estado, page, pageSize);
+    }
+
+    public int contarPedidosMonitorFiltrados(String estado) {
+        return com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.contarPedidosFiltrados(estado);
+    }
+
+
 
     public void asignarRepartidor(String codPedido, String codRepartidor) {
         if (codPedido == null || codPedido.trim().isEmpty()) {

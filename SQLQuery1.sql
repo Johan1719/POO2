@@ -177,30 +177,96 @@ DECLARE @CodPedido2 CHAR(5);
 
 DECLARE @t TABLE (CodPedido CHAR(5));
 
--- Insert Pedido 1 (CodPedido se genera con DEFAULT/sequence)
-DELETE FROM @t;
+-- Insertar muchos pedidos para probar paginado (40 escenarios -> se multiplica por 2 estados)
+-- Vamos a subir a 120 por escenario => 240 pedidos aprox.
 
-INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
-OUTPUT INSERTED.CodPedido INTO @t
-VALUES
-(GETDATE(), 21.00, 'EN ESPERA', DATEADD(MINUTE, 35, GETDATE()), NULL, 'Residencial San Isidro 145', 'E001', 'E004', 'C001', 'T01', 'PG001');
+DECLARE @i INT = 1;
+DECLARE @CodPedido CHAR(5);
 
-SELECT @CodPedido1 = CodPedido FROM @t;
+WHILE @i <= 120
+BEGIN
+    -- ===== Pedido EN ESPERA =====
+    DELETE FROM @t;
 
--- Insert Pedido 2
-DELETE FROM @t;
+    INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
+    OUTPUT INSERTED.CodPedido INTO @t
+    VALUES
+    (DATEADD(MINUTE, -(@i * 3), GETDATE()),
+     (15.00 + (@i * 0.10)),
+     'EN ESPERA',
+     DATEADD(MINUTE, 35 + (@i % 10), GETDATE()),
+     NULL,
+     'Residencial San Isidro ' + CAST(@i AS VARCHAR(10)),
+     CASE WHEN (@i % 2) = 0 THEN 'E001' ELSE 'E002' END,
+     CASE WHEN (@i % 2) = 0 THEN 'E004' ELSE 'E005' END,
+     CASE WHEN (@i % 3) = 0 THEN 'C001' WHEN (@i % 3) = 1 THEN 'C002' ELSE 'C003' END,
+     'T01',
+     'PG001');
 
-INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
-OUTPUT INSERTED.CodPedido INTO @t
-VALUES
-(GETDATE(), 11.50, 'ENTREGADO', DATEADD(MINUTE, 30, GETDATE()), GETDATE(), 'Oficina Miraflores 890', 'E002', 'E005', 'C002', 'T02', 'PG002');
+    SELECT TOP 1 @CodPedido = CodPedido FROM @t;
 
-SELECT @CodPedido2 = CodPedido FROM @t;
+    -- Detalle EN ESPERA (2 a 3 ítems)
+    INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd)
+    VALUES
+    ('PR001', @CodPedido, 1 + (@i % 3)),
+    ('PR002', @CodPedido, 1 + (@i % 2)),
+    ('PR003', @CodPedido, 1 + (@i % 4));
 
--- Detalle contra los códigos reales
-INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd) VALUES 
-('PR001', @CodPedido1, 2), ('PR002', @CodPedido1, 1),
-('PR003', @CodPedido2, 1), ('PR005', @CodPedido2, 1);
+    -- ===== Pedido EN CAMINO (para más variedad de paginado/filtrado) =====
+    DELETE FROM @t;
+
+    INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
+    OUTPUT INSERTED.CodPedido INTO @t
+    VALUES
+    (DATEADD(MINUTE, -(@i * 3) - 1, GETDATE()),
+     (12.00 + (@i * 0.07)),
+     'EN CAMINO',
+     DATEADD(MINUTE, 20 + (@i % 15), GETDATE()),
+     NULL,
+     'Av. Camino Real ' + CAST(@i AS VARCHAR(10)),
+     CASE WHEN (@i % 2) = 0 THEN 'E002' ELSE 'E001' END,
+     CASE WHEN (@i % 2) = 0 THEN 'E005' ELSE 'E004' END,
+     CASE WHEN (@i % 3) = 0 THEN 'C002' WHEN (@i % 3) = 1 THEN 'C001' ELSE 'C003' END,
+     'T02',
+     'PG002');
+
+    SELECT TOP 1 @CodPedido = CodPedido FROM @t;
+
+    INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd)
+    VALUES
+    ('PR004', @CodPedido, 1 + (@i % 5)),
+    ('PR001', @CodPedido, 1 + (@i % 2));
+
+    -- ===== Pedido ENTREGADO =====
+    DELETE FROM @t;
+
+    INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
+    OUTPUT INSERTED.CodPedido INTO @t
+    VALUES
+    (DATEADD(MINUTE, -(@i * 4), GETDATE()),
+     (10.00 + (@i * 0.08)),
+     'ENTREGADO',
+     DATEADD(MINUTE, 25 + (@i % 12), GETDATE()),
+     DATEADD(MINUTE, -(@i % 30), GETDATE()),
+     'Oficina Miraflores ' + CAST(@i AS VARCHAR(10)),
+     CASE WHEN (@i % 2) = 0 THEN 'E002' ELSE 'E001' END,
+     CASE WHEN (@i % 2) = 0 THEN 'E005' ELSE 'E004' END,
+     CASE WHEN (@i % 3) = 0 THEN 'C002' WHEN (@i % 3) = 1 THEN 'C001' ELSE 'C003' END,
+     'T02',
+     'PG002');
+
+    SELECT TOP 1 @CodPedido = CodPedido FROM @t;
+
+    -- Detalle ENTREGADO (2 ítems)
+    INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd)
+    VALUES
+    ('PR003', @CodPedido, 1 + (@i % 4)),
+    ('PR004', @CodPedido, 1 + (@i % 2));
+
+    SET @i = @i + 1;
+END;
+
+
 
 
 
