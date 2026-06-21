@@ -63,9 +63,15 @@ public class PedidoController {
     }
 
     // ===================== Paginación real para el monitor =====================
-    public List<com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.PedidoMonitorRow> listarPedidosMonitorPaginado(String estado, int page, int pageSize) {
+    // Monitor: devolvemos el DTO de la proyección usada por PanelMonitorPedidos.
+    // (PanelMonitorPedidos sigue siendo "vista tonta": solo renderiza lo que recibe.)
+    public List<com.laptitefrance.delivery.dtos.PedidoMonitorRow> listarPedidosMonitorPaginado(String estado, int page, int pageSize) {
         return com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.listarPedidosPaginado(estado, page, pageSize);
     }
+
+
+
+
 
     public int contarPedidosMonitorFiltrados(String estado) {
         return com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.contarPedidosFiltrados(estado);
@@ -89,9 +95,25 @@ public class PedidoController {
 
             pedido.setEstado("EN CAMINO");
             pedido.setCodRepartidor(codRepartidor);
-            pedido.setTiempoEntEstimado(pedido.getTiempoEntEstimado());
+
+            // Calcular tiempo estimado en base a la tarifa/zona del pedido.
+            // Tarifa tiene tiempoPromedio (minutos).
+            if (pedido.getCodTarifa() != null && !pedido.getCodTarifa().trim().isEmpty()) {
+                com.laptitefrance.delivery.models.Tarifa tarifa =
+                        new com.laptitefrance.delivery.repositories.TarifaRepository()
+                                .findById(pedido.getCodTarifa().trim())
+                                .orElse(null);
+
+                if (tarifa != null && tarifa.getTiempoPromedio() > 0) {
+                    pedido.setTiempoEntEstimado(LocalDateTime.now().plusMinutes(tarifa.getTiempoPromedio()));
+                }
+            }
+
+            // Hora de despacho (opcional): cuando asignas repartidor
+            pedido.setHoraEnvio(LocalDateTime.now());
 
             pedidoRepository.update(pedido);
+
 
 
         }).exceptionally(ex -> {

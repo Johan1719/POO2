@@ -130,10 +130,12 @@ public class PanelMonitorPedidos extends JPanel {
             }
 
 
-            List<com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.PedidoMonitorRow> filas =
+List<com.laptitefrance.delivery.dtos.PedidoMonitorRow> filas =
                     pedidoController.listarPedidosMonitorPaginado(estado, paginaActual, pageSize);
 
-            for (com.laptitefrance.delivery.repositories.PedidoMonitorRepositoryPagination.PedidoMonitorRow row : filas) {
+            for (com.laptitefrance.delivery.dtos.PedidoMonitorRow row : filas) {
+
+
                 modeloPedidos.addRow(new Object[]{
                         row.codPedido,
                         row.nombreCliente,
@@ -160,18 +162,60 @@ public class PanelMonitorPedidos extends JPanel {
         }
 
         String codPedido = (String) modeloPedidos.getValueAt(filaSeleccionada, 0);
-        String codRepartidor = JOptionPane.showInputDialog(this, "Ingrese el Código del Repartidor (Ej: E001):", "Asignar Repartidor", JOptionPane.QUESTION_MESSAGE);
 
-        if (codRepartidor != null && !codRepartidor.trim().isEmpty()) {
-            try {
-                pedidoController.asignarRepartidor(codPedido, codRepartidor.trim());
-                JOptionPane.showMessageDialog(this, "La asignación se está procesando en segundo plano.", "Procesando", JOptionPane.INFORMATION_MESSAGE);
-                cargarPedidos((String) cbxFiltroEstado.getSelectedItem());
-            } catch (ValidationException ex) {
-                mostrarAdvertencia(ex.getMessage());
-            } catch (Exception ex) {
-                mostrarError("Error inesperado: " + ex.getMessage());
+        try {
+            com.laptitefrance.delivery.controllers.RepartidorMonitorController repartidorController =
+                    new com.laptitefrance.delivery.controllers.RepartidorMonitorController();
+
+            List<com.laptitefrance.delivery.dtos.RepartidorMonitorRow> repartidores =
+                    repartidorController.listarRepartidoresConEstado();
+
+
+
+
+            if (repartidores == null || repartidores.isEmpty()) {
+
+                mostrarAdvertencia("No existen repartidores disponibles en la base de datos.");
+                return;
             }
+
+            JComboBox<com.laptitefrance.delivery.dtos.RepartidorMonitorRow> cbxRepartidor =
+                    new JComboBox<>(repartidores.toArray(new com.laptitefrance.delivery.dtos.RepartidorMonitorRow[0]));
+
+
+
+            Object[] formulario = {
+                    "Seleccione repartidor:", cbxRepartidor
+            };
+
+            int opcion = JOptionPane.showConfirmDialog(
+                    this,
+                    formulario,
+                    "Asignar Repartidor - Pedido " + codPedido,
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (opcion != JOptionPane.OK_OPTION) {
+                return;
+            }
+
+            com.laptitefrance.delivery.dtos.RepartidorMonitorRow sel = (com.laptitefrance.delivery.dtos.RepartidorMonitorRow) cbxRepartidor.getSelectedItem();
+
+
+            if (sel == null || sel.codRepartidor == null || sel.codRepartidor.trim().isEmpty()) {
+                mostrarAdvertencia("Debe seleccionar un repartidor válido.");
+                return;
+            }
+
+            pedidoController.asignarRepartidor(codPedido, sel.codRepartidor.trim());
+            JOptionPane.showMessageDialog(this, "La asignación se está procesando en segundo plano.", "Procesando", JOptionPane.INFORMATION_MESSAGE);
+            cargarPedidos((String) cbxFiltroEstado.getSelectedItem());
+
+        } catch (ValidationException ex) {
+            mostrarAdvertencia(ex.getMessage());
+        } catch (Exception ex) {
+            mostrarError("Error inesperado: " + ex.getMessage());
         }
     }
 

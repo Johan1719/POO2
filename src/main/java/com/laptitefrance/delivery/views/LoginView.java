@@ -64,7 +64,7 @@ public class LoginView extends JFrame {
         btnIngresar.setFocusPainted(false);
         btnIngresar.setBounds(100, 170, 200, 40);
         
-        // ACCIÓN DEL BOTÓN (Uso de Lambda)
+        // ACCIÓN DEL BOTÓN (Uso de Lambda) 
         btnIngresar.addActionListener(e -> validarLogin());
         
         add(btnIngresar);

@@ -1,7 +1,6 @@
 package com.laptitefrance.delivery.repositories;
-
 import com.laptitefrance.delivery.config.DBConnection;
-
+import com.laptitefrance.delivery.dtos.PedidoMonitorRow;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -117,14 +116,6 @@ public final class PedidoMonitorRepositoryPagination {
     }
 
     /** DTO interno para el monitor (fácil de mapear a la tabla). */
-    public static class PedidoMonitorRow {
-        public String codPedido;
-        public double montoPedido;
-        public String estado;
-        public LocalDateTime fechaSolicitud;
-        public LocalDateTime tiempoEntEstimado;
-        public String nombreCliente;
-        public String nombreRepartidor;
-    }
+
 }
 

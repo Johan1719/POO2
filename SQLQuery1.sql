@@ -1,4 +1,3 @@
-
 USE LaPtiteFranceDB;
 GO
 
@@ -39,91 +38,91 @@ GO
 -- 2. TABLAS MAESTRAS (Catálogos sin secuencia)
 -- ==========================================
 CREATE TABLE Categoria (
-    CodCat CHAR(6) PRIMARY KEY,
-    NombreCat VARCHAR(30)
+    CodCat CHAR(6) PRIMARY KEY,
+    NombreCat VARCHAR(30)
 );
 
 CREATE TABLE Tarifa (
-    CodTarifa CHAR(3) PRIMARY KEY,
-    NombreZona VARCHAR(30),
-    PrecioTarifa FLOAT,
-    TiempoPromedio INT
+    CodTarifa CHAR(3) PRIMARY KEY,
+    NombreZona VARCHAR(30),
+    PrecioTarifa FLOAT,
+    TiempoPromedio INT
 );
 
 -- ==========================================
 -- 3. TABLAS CON CRECIMIENTO (Con secuencias por DEFAULT)
 -- ==========================================
 CREATE TABLE Cliente (
-    IDCliente CHAR(4) PRIMARY KEY DEFAULT ('C' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_cliente AS VARCHAR(10)), 3)),
-    FechaRegistro DATETIME,
-    NombreCliente VARCHAR(30),
-    Nrocelular CHAR(9)
+    IDCliente CHAR(4) PRIMARY KEY DEFAULT ('C' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_cliente AS VARCHAR(10)), 3)),
+    FechaRegistro DATETIME,
+    NombreCliente VARCHAR(30),
+    Nrocelular CHAR(9)
 );
 
 CREATE TABLE Empleado (
-    CodEmpleado CHAR(4) PRIMARY KEY DEFAULT ('E' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_empleado AS VARCHAR(10)), 3)),
-    Nombre VARCHAR(30),
-    Numero VARCHAR(10), 
-    Direccion VARCHAR(30),
-    CorreoElec VARCHAR(30),
-    AniosExp SMALLINT
+    CodEmpleado CHAR(4) PRIMARY KEY DEFAULT ('E' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_empleado AS VARCHAR(10)), 3)),
+    Nombre VARCHAR(30),
+    Numero VARCHAR(10), 
+    Direccion VARCHAR(30),
+    CorreoElec VARCHAR(30),
+    AniosExp SMALLINT
 );
 
 CREATE TABLE Telefono (
-    IDTelefono INT IDENTITY(1,1) PRIMARY KEY,
-    CodEmpleado CHAR(4) FOREIGN KEY REFERENCES Empleado(CodEmpleado),
-    NroTelefono VARCHAR(15) NOT NULL
+    IDTelefono INT IDENTITY(1,1) PRIMARY KEY,
+    CodEmpleado CHAR(4) FOREIGN KEY REFERENCES Empleado(CodEmpleado),
+    NroTelefono VARCHAR(15) NOT NULL
 );
 
 CREATE TABLE Asistente (
-    CodAsistente CHAR(4) PRIMARY KEY FOREIGN KEY REFERENCES Empleado(CodEmpleado)
+    CodAsistente CHAR(4) PRIMARY KEY FOREIGN KEY REFERENCES Empleado(CodEmpleado)
 );
 
 CREATE TABLE Repartidor (
-    CodRepartidor CHAR(4) PRIMARY KEY FOREIGN KEY REFERENCES Empleado(CodEmpleado)
+    CodRepartidor CHAR(4) PRIMARY KEY FOREIGN KEY REFERENCES Empleado(CodEmpleado)
 );
 
 CREATE TABLE Pago (
-    CodPago CHAR(5) PRIMARY KEY DEFAULT ('PG' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_pago AS VARCHAR(10)), 3)),
-    MetodoPago VARCHAR(30),
-    FechaPago DATETIME,
-    MontoTotal FLOAT,
-    Observaciones VARCHAR(30),
-    CantDesc FLOAT,
-    IGV FLOAT,
-    CostoTarifa FLOAT
+    CodPago CHAR(5) PRIMARY KEY DEFAULT ('PG' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_pago AS VARCHAR(10)), 3)),
+    MetodoPago VARCHAR(30),
+    FechaPago DATETIME,
+    MontoTotal FLOAT,
+    Observaciones VARCHAR(30),
+    CantDesc FLOAT,
+    IGV FLOAT,
+    CostoTarifa FLOAT
 );
 
 CREATE TABLE Producto (
-    CodProducto CHAR(5) PRIMARY KEY DEFAULT ('PR' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_producto AS VARCHAR(10)), 3)),
-    NombreProd VARCHAR(30),
-    Stock SMALLINT,
-    PrecioProd FLOAT,
-    CodCat CHAR(6) FOREIGN KEY REFERENCES Categoria(CodCat),
-    Activo BIT NOT NULL DEFAULT 1
+    CodProducto CHAR(5) PRIMARY KEY DEFAULT ('PR' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_producto AS VARCHAR(10)), 3)),
+    NombreProd VARCHAR(30),
+    Stock SMALLINT,
+    PrecioProd FLOAT,
+    CodCat CHAR(6) FOREIGN KEY REFERENCES Categoria(CodCat),
+    Activo BIT NOT NULL DEFAULT 1
 );
 
 CREATE TABLE Pedido (
-    CodPedido CHAR(5) PRIMARY KEY DEFAULT ('P' + RIGHT('0000' + CAST(NEXT VALUE FOR dbo.seq_pedido AS VARCHAR(10)), 4)),
-    Fechasolicitud DATETIME,
-    MontoPedido FLOAT,
-    Estado VARCHAR(30),
-    TiempoEntEstimado DATETIME,
-    TiempoEntReal DATETIME,
-    HoraEnvio DATETIME,
-    DireccionEntrega VARCHAR(100), 
-    CodAsistente CHAR(4) FOREIGN KEY REFERENCES Asistente(CodAsistente), 
-    CodRepartidor CHAR(4) FOREIGN KEY REFERENCES Repartidor(CodRepartidor),
-    IDCliente CHAR(4) FOREIGN KEY REFERENCES Cliente(IDCliente),
-    CodTarifa CHAR(3) FOREIGN KEY REFERENCES Tarifa(CodTarifa),
-    CodPago CHAR(5) FOREIGN KEY REFERENCES Pago(CodPago)
+    CodPedido CHAR(5) PRIMARY KEY DEFAULT ('P' + RIGHT('0000' + CAST(NEXT VALUE FOR dbo.seq_pedido AS VARCHAR(10)), 4)),
+    Fechasolicitud DATETIME,
+    MontoPedido FLOAT,
+    Estado VARCHAR(30),
+    TiempoEntEstimado DATETIME,
+    TiempoEntReal DATETIME,
+    HoraEnvio DATETIME,
+    DireccionEntrega VARCHAR(100), 
+    CodAsistente CHAR(4) FOREIGN KEY REFERENCES Asistente(CodAsistente), 
+    CodRepartidor CHAR(4) FOREIGN KEY REFERENCES Repartidor(CodRepartidor),
+    IDCliente CHAR(4) FOREIGN KEY REFERENCES Cliente(IDCliente),
+    CodTarifa CHAR(3) FOREIGN KEY REFERENCES Tarifa(CodTarifa),
+    CodPago CHAR(5) FOREIGN KEY REFERENCES Pago(CodPago)
 );
 
 CREATE TABLE Pedido_Producto (
-    CodProducto CHAR(5) FOREIGN KEY REFERENCES Producto(CodProducto),
-    CodPedido CHAR(5) FOREIGN KEY REFERENCES Pedido(CodPedido),
-    CantProd SMALLINT,
-    PRIMARY KEY (CodProducto, CodPedido)
+    CodProducto CHAR(5) FOREIGN KEY REFERENCES Producto(CodProducto),
+    CodPedido CHAR(5) FOREIGN KEY REFERENCES Pedido(CodPedido),
+    CantProd SMALLINT,
+    PRIMARY KEY (CodProducto, CodPedido)
 );
 GO
 
@@ -138,7 +137,7 @@ INSERT INTO Categoria (CodCat, NombreCat) VALUES
 INSERT INTO Tarifa (CodTarifa, NombreZona, PrecioTarifa, TiempoPromedio) VALUES 
 ('T01', 'Retiro en Tienda', 0.00, 5), ('T02', 'Huaral Centro', 5.00, 20), ('T03', 'Alrededores Huaral', 8.50, 45);
 
--- Entidades (Omitimos el PK para que la secuencia actúe sola. Como no los cruzaremos aún, no necesitamos variables aquí)
+-- Entidades base
 INSERT INTO Cliente (FechaRegistro, NombreCliente, Nrocelular) VALUES 
 (GETDATE(), 'Valeria Mendoza', '987654321'), (GETDATE(), 'Carlos Ruiz', '912345678'), (GETDATE(), 'Sofia Carrillo', '999888777');
 
@@ -167,6 +166,47 @@ INSERT INTO Pago (MetodoPago, FechaPago, MontoTotal, Observaciones, CantDesc, IG
 ('Efectivo', GETDATE(), 0.0, 'Pago al contado', 0.0, 0.0, 0.0);
 
 -- ==========================================
+-- 4B. DATOS EXTRA (40 usuarios y 40 productos) para probar paginado
+-- ==========================================
+
+-- 40 usuarios extra (clientes)
+DECLARE @u INT = 4;
+WHILE @u < 44
+BEGIN
+    INSERT INTO Cliente (FechaRegistro, NombreCliente, Nrocelular)
+    VALUES (
+        DATEADD(MINUTE, -(@u * 2), GETDATE()),
+        'Cliente ' + CAST(@u AS VARCHAR(10)),
+        RIGHT('9' + CAST(@u AS VARCHAR(10)), 9)
+    );
+    SET @u = @u + 1;
+END;
+
+-- 40 productos extra
+DECLARE @pr INT = 6;
+WHILE @pr < 46
+BEGIN
+    DECLARE @codCat CHAR(6);
+    SET @codCat = CASE
+        WHEN (@pr % 4) = 1 THEN 'CAT001'
+        WHEN (@pr % 4) = 2 THEN 'CAT002'
+        WHEN (@pr % 4) = 3 THEN 'CAT003'
+        ELSE 'CAT004'
+    END;
+
+    INSERT INTO Producto (NombreProd, Stock, PrecioProd, CodCat, Activo)
+    VALUES (
+        'Producto ' + CAST(@pr AS VARCHAR(10)),
+        (@pr % 50) + 1,
+        CAST((@pr * 1.1) AS FLOAT) / 10.0,
+        @codCat,
+        1
+    );
+
+    SET @pr = @pr + 1;
+END;
+
+-- ==========================================
 -- 5. SINCRONIZACIÓN PERFECTA (Pedidos + Detalles)
 -- Estrategia B: NO hardcodear CodPedido. Capturar el CodPedido real generado.
 -- ==========================================
@@ -177,9 +217,7 @@ DECLARE @CodPedido2 CHAR(5);
 
 DECLARE @t TABLE (CodPedido CHAR(5));
 
--- Insertar muchos pedidos para probar paginado (40 escenarios -> se multiplica por 2 estados)
--- Vamos a subir a 120 por escenario => 240 pedidos aprox.
-
+-- Insertar muchos pedidos para probar paginado (120 escenarios => ~240 pedidos aprox.)
 DECLARE @i INT = 1;
 DECLARE @CodPedido CHAR(5);
 
@@ -212,7 +250,7 @@ BEGIN
     ('PR002', @CodPedido, 1 + (@i % 2)),
     ('PR003', @CodPedido, 1 + (@i % 4));
 
-    -- ===== Pedido EN CAMINO (para más variedad de paginado/filtrado) =====
+    -- ===== Pedido EN CAMINO =====
     DELETE FROM @t;
 
     INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
@@ -257,7 +295,6 @@ BEGIN
 
     SELECT TOP 1 @CodPedido = CodPedido FROM @t;
 
-    -- Detalle ENTREGADO (2 ítems)
     INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd)
     VALUES
     ('PR003', @CodPedido, 1 + (@i % 4)),
@@ -266,41 +303,37 @@ BEGIN
     SET @i = @i + 1;
 END;
 
-
-
-
-
 -- ==========================================
--- 6. VERIFICACI�N FINAL
+-- 6. VERIFICACIÓN FINAL
 -- ==========================================
 SELECT 
-    CodPedido, 
-    IDCliente, 
-    MontoPedido, 
-    Estado, 
-    Fechasolicitud,
-    DireccionEntrega, 
-    CodTarifa,        
-    CodPago           
-FROM 
-    Pedido
-ORDER BY 
-    Fechasolicitud DESC;
-GO
--- ==========================================
--- 6. VERIFICACI�N FINAL
--- ==========================================
-SELECT 
-    CodPedido, 
-    IDCliente, 
-    MontoPedido, 
-    Estado, 
+    CodPedido,
+    IDCliente,
+    MontoPedido,
+    Estado,
     Fechasolicitud,
-    DireccionEntrega, 
-    CodTarifa,        
-    CodPago           
+    DireccionEntrega,
+    CodTarifa,
+    CodPago
 FROM 
     Pedido
 ORDER BY 
     Fechasolicitud DESC;
 GO
+
+-- (2) Vista rápida extra igual que tu script original
+SELECT 
+    CodPedido,
+    IDCliente,
+    MontoPedido,
+    Estado,
+    Fechasolicitud,
+    DireccionEntrega,
+    CodTarifa,
+    CodPago
+FROM 
+    Pedido
+ORDER BY 
+    Fechasolicitud DESC;
+GO
+
