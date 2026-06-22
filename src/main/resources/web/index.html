@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La P'tite France — Pedidos del repartidor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>🛵 Mis pedidos</h1>
+        <div class="buscador">
+            <input id="codRepartidor" type="text" placeholder="Tu código (ej. E004)" />
+            <button id="btnBuscar">Buscar mis pedidos</button>
+        </div>
+    </header>
+
+    <main>
+        <p id="mensaje" class="mensaje"></p>
+        <table id="tabla">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Nombre</th>
+                    <th>Dirección</th>
+                    <th>Método de pago</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+
+        <div class="paginacion">
+            <button id="btnAnterior">&laquo; Anterior</button>
+            <span id="infoPagina">Página 0 de 0</span>
+            <button id="btnSiguiente">Siguiente &raquo;</button>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
