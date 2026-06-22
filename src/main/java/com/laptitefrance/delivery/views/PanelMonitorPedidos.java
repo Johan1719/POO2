@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
 
 import com.laptitefrance.delivery.controllers.PedidoController;
@@ -26,11 +27,13 @@ public class PanelMonitorPedidos extends JPanel {
     private final PedidoController pedidoController;
     
     private PaginatorPanel paginator;
-    
+
     private JTable tablaPedidos;
 
     private DefaultTableModel modeloPedidos;
     private JComboBox<String> cbxFiltroEstado;
+
+    private Timer timerRefresco;
 
     // 👇 Constructor modificado para recibir Inyección de Dependencias
     public PanelMonitorPedidos(PedidoController pedidoController) {
@@ -40,7 +43,11 @@ public class PanelMonitorPedidos extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         inicializarComponentes();
-        cargarPedidos("TODOS"); 
+        cargarPedidos("TODOS");
+
+        // Auto-refresco: refleja los cambios hechos por los repartidores desde la web.
+        timerRefresco = new Timer(3000, e -> cargarPedidos((String) cbxFiltroEstado.getSelectedItem()));
+        timerRefresco.start();
     }
 
     private void inicializarComponentes() {
@@ -249,4 +256,12 @@ List<com.laptitefrance.delivery.dtos.PedidoMonitorRow> filas =
 
     private void mostrarAdvertencia(String mensaje) { JOptionPane.showMessageDialog(this, mensaje, "Atención", JOptionPane.WARNING_MESSAGE); }
     private void mostrarError(String mensaje) { JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE); }
+
+    @Override
+    public void removeNotify() {
+        if (timerRefresco != null) {
+            timerRefresco.stop();
+        }
+        super.removeNotify();
+    }
 }
