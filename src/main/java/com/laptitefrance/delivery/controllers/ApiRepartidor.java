@@ -5,6 +5,10 @@ import com.laptitefrance.delivery.repositories.RepartidorPedidosRepository;
 
 import io.javalin.Javalin;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
 import java.util.List;
 import java.util.Map;
 
@@ -14,10 +18,36 @@ import java.util.Map;
  */
 public class ApiRepartidor {
 
+    private static String loadResourceAsString(String resourcePath) {
+        // Busca el archivo en el classpath. Para esto, el contenido debe estar en src/main/resources.
+        // (Luego ajustamos para copiar web-repartidor a resources si es necesario.)
+        try (InputStream is = ApiRepartidor.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            if (is == null) return null;
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Error leyendo recurso: " + resourcePath, e);
+        }
+    }
+
+
     public static void main(String[] args) {
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
         }).start(8080);
+
+        // Vista: servir el index del repartidor desde Javalin
+        app.get("/repartidor", ctx -> {
+            String html = loadResourceAsString("web-repartidor/index.html");
+            if (html == null) {
+                ctx.status(404).result("No se encontró web-repartidor/index.html en recursos");
+                return;
+            }
+            ctx.contentType("text/html; charset=utf-8");
+            ctx.result(html);
+        });
+
+        app.get("/", ctx -> ctx.redirect("/repartidor"));
+
 
         // GET: pedidos asignados a un repartidor (incluye dirección textual y cliente)
         app.get("/api/repartidores/{codRepartidor}/pedidos", ctx -> {
