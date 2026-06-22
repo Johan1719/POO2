@@ -82,4 +82,44 @@ class CentroDespachoTest {
         assertEquals(hilos - 1, yaTomados.get());
         assertEquals("EN CAMINO", repo.findById("P0001").get().getEstado());
     }
+
+    @Test
+    void entregarLiberaAlRepartidor() {
+        FakePedidoRepository repo = new FakePedidoRepository();
+        repo.insert(pedidoEnEspera("P0001"));
+        CentroDespacho centro = new CentroDespacho(repo);
+        centro.conectarRepartidor("E004");
+
+        assertEquals(ResultadoOperacion.Tipo.OK, centro.tomarPedido("P0001", "E004").getTipo());
+        assertEquals(EstadoRepartidor.OCUPADO, centro.listarDisponibles().get(0).getEstado());
+
+        ResultadoOperacion entrega = centro.entregarPedido("P0001", "E004");
+        assertEquals(ResultadoOperacion.Tipo.OK, entrega.getTipo());
+        assertEquals("ENTREGADO", repo.findById("P0001").get().getEstado());
+        assertEquals(EstadoRepartidor.LIBRE, centro.listarDisponibles().get(0).getEstado());
+    }
+
+    @Test
+    void asignacionAutomaticaAsignaPedidoEncolado() throws InterruptedException {
+        FakePedidoRepository repo = new FakePedidoRepository();
+        repo.insert(pedidoEnEspera("P0001"));
+        CentroDespacho centro = new CentroDespacho(repo);
+        centro.conectarRepartidor("E004");
+        centro.encolarPedido("P0001");
+
+        centro.iniciar();
+        try {
+            // Esperar (con timeout) a que el hilo despachador asigne.
+            long limite = System.currentTimeMillis() + 3000;
+            while (!"EN CAMINO".equals(repo.findById("P0001").get().getEstado())
+                    && System.currentTimeMillis() < limite) {
+                Thread.sleep(50);
+            }
+        } finally {
+            centro.detener();
+        }
+
+        assertEquals("EN CAMINO", repo.findById("P0001").get().getEstado());
+        assertEquals("E004", repo.findById("P0001").get().getCodRepartidor());
+    }
 }
