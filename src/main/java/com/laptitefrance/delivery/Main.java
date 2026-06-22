@@ -1,26 +1,34 @@
 package com.laptitefrance.delivery;
 
+import com.laptitefrance.delivery.despacho.CentroDespacho;
+import com.laptitefrance.delivery.despacho.ServidorWebRepartidor;
+import com.laptitefrance.delivery.repositories.PedidoRepository;
 import com.laptitefrance.delivery.views.LoginView;
 
 import javax.swing.SwingUtilities;
 
 /**
- * Punto de entrada principal de la aplicación de escritorio.
+ * Punto de entrada único de la aplicación. Inicializa, en el mismo proceso:
+ *  - el servidor web del repartidor (Javalin, puerto 8080), y
+ *  - la interfaz de escritorio del asistente (Swing), empezando por el login.
  *
- * Arranca la interfaz gráfica (Swing) mostrando la ventana de Login.
- * Tras un inicio de sesión correcto, el flujo continúa hacia el
- * DashboardAsistenteView con sus distintas pestañas (Nueva Venta,
- * Monitor de Pedidos, Clientes e Inventario).
+ * Ambos comparten la misma base de datos; el servidor web usa su propio
+ * CentroDespacho (thread-safe) para coordinar la confirmación de entrega.
  *
- * NOTA: se usa el Look & Feel multiplataforma por defecto (Metal) de forma
- * intencional. El L&F del sistema (Windows) no pinta el color de fondo de los
- * JButton que usan setBackground()+setForeground(WHITE), dejando los botones
- * con el texto invisible. El L&F por defecto sí respeta esos colores.
+ * Se usa el Look & Feel multiplataforma por defecto a propósito: el L&F del
+ * sistema (Windows) no pinta el color de fondo de los JButton, dejando el texto
+ * invisible.
  */
 public class Main {
 
     public static void main(String[] args) {
-        // Toda la interfaz de Swing debe construirse en el Event Dispatch Thread.
+        // 1. Servidor web del repartidor (hilos propios de Javalin).
+        CentroDespacho centro = new CentroDespacho(new PedidoRepository());
+        ServidorWebRepartidor servidor = new ServidorWebRepartidor(centro);
+        servidor.iniciar(ServidorWebRepartidor.PUERTO_DEFECTO);
+        Runtime.getRuntime().addShutdownHook(new Thread(servidor::detener));
+
+        // 2. Interfaz de escritorio del asistente (Event Dispatch Thread).
         SwingUtilities.invokeLater(() -> new LoginView().setVisible(true));
     }
 }
