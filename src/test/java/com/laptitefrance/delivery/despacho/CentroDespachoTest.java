@@ -21,6 +21,14 @@ class CentroDespachoTest {
         return p;
     }
 
+    private Pedido pedidoEnCamino(String cod, String codRepartidor) {
+        Pedido p = new Pedido();
+        p.setCodPedido(cod);
+        p.setEstado("EN CAMINO");
+        p.setCodRepartidor(codRepartidor);
+        return p;
+    }
+
     @Test
     void conectarYDesconectarRepartidor() {
         CentroDespacho centro = new CentroDespacho(new FakePedidoRepository());
@@ -135,5 +143,79 @@ class CentroDespachoTest {
         CentroDespacho centro = new CentroDespacho(new FakePedidoRepository());
         ResultadoOperacion r = centro.tomarPedido("P0001", null);
         assertEquals(ResultadoOperacion.Tipo.REPARTIDOR_NO_DISPONIBLE, r.getTipo());
+    }
+
+    @Test
+    void confirmarEntregaExitosaPasaAEntregado() {
+        FakePedidoRepository repo = new FakePedidoRepository();
+        repo.insert(pedidoEnCamino("P0001", "E004"));
+        CentroDespacho centro = new CentroDespacho(repo);
+
+        ResultadoOperacion r = centro.confirmarEntrega("P0001", "E004");
+
+        assertEquals(ResultadoOperacion.Tipo.OK, r.getTipo());
+        assertEquals("ENTREGADO", repo.findById("P0001").get().getEstado());
+    }
+
+    @Test
+    void confirmarEntregaDePedidoDeOtroRepartidorEsRechazada() {
+        FakePedidoRepository repo = new FakePedidoRepository();
+        repo.insert(pedidoEnCamino("P0001", "E004"));
+        CentroDespacho centro = new CentroDespacho(repo);
+
+        ResultadoOperacion r = centro.confirmarEntrega("P0001", "E005");
+
+        assertEquals(ResultadoOperacion.Tipo.REPARTIDOR_NO_DISPONIBLE, r.getTipo());
+        assertEquals("EN CAMINO", repo.findById("P0001").get().getEstado());
+    }
+
+    @Test
+    void confirmarEntregaDePedidoNoEnCaminoEsRechazada() {
+        FakePedidoRepository repo = new FakePedidoRepository();
+        Pedido p = new Pedido();
+        p.setCodPedido("P0001");
+        p.setEstado("EN ESPERA");
+        p.setCodRepartidor("E004");
+        repo.insert(p);
+        CentroDespacho centro = new CentroDespacho(repo);
+
+        ResultadoOperacion r = centro.confirmarEntrega("P0001", "E004");
+
+        assertEquals(ResultadoOperacion.Tipo.YA_TOMADO, r.getTipo());
+    }
+
+    @Test
+    void confirmarEntregaConcurrenteSoloUnaGana() throws InterruptedException {
+        FakePedidoRepository repo = new FakePedidoRepository();
+        repo.insert(pedidoEnCamino("P0001", "E004"));
+        CentroDespacho centro = new CentroDespacho(repo);
+
+        int hilos = 12;
+        ExecutorService pool = Executors.newFixedThreadPool(hilos);
+        CountDownLatch listos = new CountDownLatch(hilos);
+        CountDownLatch salida = new CountDownLatch(1);
+        AtomicInteger oks = new AtomicInteger(0);
+
+        for (int i = 0; i < hilos; i++) {
+            pool.submit(() -> {
+                listos.countDown();
+                try {
+                    salida.await();
+                    if (centro.confirmarEntrega("P0001", "E004").getTipo() == ResultadoOperacion.Tipo.OK) {
+                        oks.incrementAndGet();
+                    }
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+
+        listos.await();
+        salida.countDown();
+        pool.shutdown();
+        assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS));
+
+        assertEquals(1, oks.get());
+        assertEquals("ENTREGADO", repo.findById("P0001").get().getEstado());
     }
 }

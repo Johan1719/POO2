@@ -2,6 +2,7 @@ package com.laptitefrance.delivery.despacho;
 
 import com.laptitefrance.delivery.models.Pedido;
 import com.laptitefrance.delivery.repositories.IRepositorioBase;
+import com.laptitefrance.delivery.repositories.PedidoRepartidorRepositoryPagination;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -263,5 +264,61 @@ public class CentroDespacho {
                 "pendientesEnCola", colaPendientes.size(),
                 "repartidoresConectados", repartidoresDisponibles.size(),
                 "repartidoresLibres", libres);
+    }
+
+    // --- Flujo web del repartidor ------------------------------------------
+
+    /**
+     * Confirma la entrega de un pedido asignado a un repartidor. Bajo el lock del
+     * pedido: valida existencia, pertenencia y estado EN CAMINO; lo pasa a
+     * ENTREGADO y persiste. No usa el pool de repartidores conectados.
+     */
+    public ResultadoOperacion confirmarEntrega(String codPedido, String codRepartidor) {
+        if (codPedido == null || codPedido.isBlank()) {
+            return ResultadoOperacion.noEncontrado("Código de pedido vacío.");
+        }
+        if (codRepartidor == null || codRepartidor.isBlank()) {
+            return ResultadoOperacion.repartidorNoDisponible("Código de repartidor vacío.");
+        }
+
+        ReentrantLock lock = lockDe(codPedido);
+        lock.lock();
+        try {
+            Optional<Pedido> opt = pedidoRepository.findById(codPedido);
+            if (opt.isEmpty()) {
+                return ResultadoOperacion.noEncontrado("No existe el pedido: " + codPedido);
+            }
+            Pedido pedido = opt.get();
+            if (!codRepartidor.equals(pedido.getCodRepartidor())) {
+                return ResultadoOperacion.repartidorNoDisponible(
+                        "El pedido " + codPedido + " no está asignado a " + codRepartidor);
+            }
+            if (!EN_CAMINO.equalsIgnoreCase(pedido.getEstado())) {
+                return ResultadoOperacion.yaTomado("El pedido no está EN CAMINO: " + codPedido);
+            }
+
+            pedido.setEstado(ENTREGADO);
+            pedido.setTiempoEntReal(LocalDateTime.now());
+            try {
+                pedidoRepository.update(pedido);
+            } catch (RuntimeException ex) {
+                pedido.setEstado(EN_CAMINO); // revertir el cambio en memoria
+                return ResultadoOperacion.errorInterno("Error al persistir la entrega: " + ex.getMessage());
+            }
+            return ResultadoOperacion.ok("Pedido " + codPedido + " entregado.", null);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Página de los pedidos asignados a un repartidor (para la tabla web). */
+    public PaginaRepartidor pedidosDeRepartidor(String codRepartidor, int page, int size) {
+        int p = Math.max(1, page);
+        int s = Math.max(1, size);
+        var filas = PedidoRepartidorRepositoryPagination.listar(codRepartidor, p, s);
+        int total = PedidoRepartidorRepositoryPagination.contar(codRepartidor);
+        int totalPaginas = (int) Math.ceil(total / (double) s);
+        if (totalPaginas < 1) totalPaginas = 1;
+        return new PaginaRepartidor(filas, p, totalPaginas, total);
     }
 }
