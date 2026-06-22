@@ -1,227 +1,15 @@
 USE LaPtiteFranceDB;
 GO
 
--- 1. Eliminamos las tablas gen�ricas que creamos hace un rato (el orden importa)
-DROP TABLE IF EXISTS Pedido;
-DROP TABLE IF EXISTS Direccion;
-DROP TABLE IF EXISTS Telefono;
-DROP TABLE IF EXISTS Cliente;
-GO
-
--- 2. Creamos la tabla Cliente EXACTAMENTE con los tipos de dato de tu diagrama
-CREATE TABLE Cliente (
-    IDCliente CHAR(4) PRIMARY KEY,
-    FechaRegistro DATETIME,
-    NombreCliente VARCHAR(30),
-    Nrocelular CHAR(9)
-);
-GO
-
-USE LaPtiteFranceDB;
-GO
-
--- Esto te mostrar� todas las filas y columnas guardadas en la tabla
-SELECT * FROM Cliente;
-
-USE LaPtiteFranceDB;
-GO
-
 -- ==========================================
--- 1. TABLAS MAESTRAS (Sin llaves for�neas)
--- ==========================================
-
-CREATE TABLE Categoria (
-    CodCat CHAR(6) PRIMARY KEY,
-    NombreCat VARCHAR(30)
-);
-
-CREATE TABLE Tarifa (
-    CodTarifa CHAR(3) PRIMARY KEY,
-    NombreTarifa VARCHAR(30),
-    PrecioTarifa FLOAT,
-    TiempoPromedio INT
-);
-
-
-CREATE TABLE Pago (
-    CodPago CHAR(5) PRIMARY KEY,
-    MetodoPago VARCHAR(30),
-    FechaPago DATETIME,
-    MontoTotal FLOAT,
-    Observaciones VARCHAR(30),
-    CantDesc FLOAT,
-    IGV FLOAT,
-    CostoTarifa FLOAT
-);
-
--- ==========================================
--- 2. TABLAS DE EMPLEADOS Y CONTACTO
--- ==========================================
-
-CREATE TABLE Empleado (
-    CodEmpleado CHAR(4) PRIMARY KEY,
-    Nombre VARCHAR(30),
-    Numero VARCHAR(10), -- Configurado espec�ficamente como el n�mero de calle
-    Direccion VARCHAR(30),
-    CorreoElec VARCHAR(30),
-    AniosExp SMALLINT
-);
-
--- Tabla de tel�fonos normalizada
-CREATE TABLE Telefono (
-    IDTelefono INT IDENTITY(1,1) PRIMARY KEY,
-    CodEmpleado CHAR(4) FOREIGN KEY REFERENCES Empleado(CodEmpleado),
-    NroTelefono VARCHAR(15) NOT NULL
-);
-
-CREATE TABLE Asistente (
-    CodAsistente CHAR(4) PRIMARY KEY,
-    FOREIGN KEY (CodAsistente) REFERENCES Empleado(CodEmpleado)
-);
-
-CREATE TABLE Repartidor (
-    CodRepartidor CHAR(4) PRIMARY KEY,
-    FOREIGN KEY (CodRepartidor) REFERENCES Empleado(CodEmpleado)
-);
-
--- ==========================================
--- 3. TABLAS TRANSACCIONALES Y DEPENDIENTES
--- ==========================================
-
-CREATE TABLE Producto (
-    CodProducto CHAR(5) PRIMARY KEY,
-    NombreProd VARCHAR(30),
-    Stock SMALLINT,
-    PrecioProd FLOAT,
-    CodCat CHAR(6) FOREIGN KEY REFERENCES Categoria(CodCat)
-);
-
-CREATE TABLE Direccion (
-    Ubicacion VARCHAR(30),
-    distrito VARCHAR(30),
-    AreaLoc VARCHAR(30),
-    IDCliente CHAR(4),
-    Numero VARCHAR(10), -- N�mero de calle 
-    PRIMARY KEY (Ubicacion, distrito, AreaLoc, IDCliente),
-    FOREIGN KEY (IDCliente) REFERENCES Cliente(IDCliente)
-);
-
-CREATE TABLE Atencion (
-    IDCliente CHAR(4),
-    CodAsistente CHAR(4),
-    FechaAtencion DATETIME,
-    PRIMARY KEY (IDCliente, CodAsistente),
-    FOREIGN KEY (IDCliente) REFERENCES Cliente(IDCliente),
-    FOREIGN KEY (CodAsistente) REFERENCES Asistente(CodAsistente)
-);
-
--- ==========================================
--- 4. EL N�CLEO: PEDIDO
--- ==========================================
-
-CREATE TABLE Pedido (
-    CodPedido CHAR(5) PRIMARY KEY,
-    Fechasolicitud DATETIME,
-    MontoPedido FLOAT,
-    Estado VARCHAR(30),
-    TiempoEntEstimado DATETIME,
-    TiempoEntReal DATETIME,
-    CodRepartidor CHAR(4) FOREIGN KEY REFERENCES Repartidor(CodRepartidor),
-    IDCliente CHAR(4) FOREIGN KEY REFERENCES Cliente(IDCliente),
-    CodTarifa CHAR(3) FOREIGN KEY REFERENCES Tarifa(CodTarifa),
-    CodPago CHAR(5) FOREIGN KEY REFERENCES Pago(CodPago)
-);
-
--- Tabla intermedia (Relaci�n Muchos a Muchos)
-CREATE TABLE Pedido_Producto (
-    CodProducto CHAR(5),
-    CodPedido CHAR(5),
-    CantProd SMALLINT,
-    PRIMARY KEY (CodProducto, CodPedido),
-    FOREIGN KEY (CodProducto) REFERENCES Producto(CodProducto),
-    FOREIGN KEY (CodPedido) REFERENCES Pedido(CodPedido)
-);
-GO
-
-USE LaPtiteFranceDB;
-GO
-
-SELECT * FROM Cliente;
-SELECT * FROM Categoria;
-SELECT * FROM Tarifa;
-SELECT * FROM Pago;
-SELECT * FROM Empleado;
-SELECT * FROM Telefono;
-SELECT * FROM Asistente;
-SELECT * FROM Repartidor;
-SELECT * FROM Producto;
-SELECT * FROM Direccion;
-SELECT * FROM Atencion;
-SELECT * FROM Pedido;
-SELECT * FROM Pedido_Producto;
-GO
-
-USE LaPtiteFranceDB;
-GO
-
-DELETE FROM Pedido_Producto;
-DELETE FROM Pedido;
-DELETE FROM Atencion;
-DELETE FROM Direccion;
-DELETE FROM Telefono;
-DELETE FROM Producto;
-DELETE FROM Repartidor;
-DELETE FROM Asistente;
-DELETE FROM Pago;
-DELETE FROM Tarifa;
-DELETE FROM Categoria;
-DELETE FROM Empleado;
-DELETE FROM Cliente;
-GO
-
-
-DBCC CHECKIDENT ('Telefono', RESEED, 0);
-GO
-
-SELECT COUNT(*) AS Registros FROM Cliente;
-SELECT COUNT(*) AS Registros FROM Categoria;
-SELECT COUNT(*) AS Registros FROM Tarifa;
-SELECT COUNT(*) AS Registros FROM Pago;
-SELECT COUNT(*) AS Registros FROM Empleado;
-SELECT COUNT(*) AS Registros FROM Telefono;
-SELECT COUNT(*) AS Registros FROM Asistente;
-SELECT COUNT(*) AS Registros FROM Repartidor;
-SELECT COUNT(*) AS Registros FROM Producto;
-SELECT COUNT(*) AS Registros FROM Direccion;
-SELECT COUNT(*) AS Registros FROM Atencion;
-SELECT COUNT(*) AS Registros FROM Pedido;
-SELECT COUNT(*) AS Registros FROM Pedido_Producto;
-GO
-
-
-
-
-
-
-
-
-
-
-
-USE LaPtiteFranceDB;
-GO
-
--- ==========================================
--- 0. DESTRUCCI�N SEGURA (Orden inverso: Hijos -> Padres)
+-- 0. DESTRUCCIÓN SEGURA
 -- ==========================================
 DROP TABLE IF EXISTS Pedido_Producto;
 DROP TABLE IF EXISTS Pedido;
-DROP TABLE IF EXISTS Atencion;
-DROP TABLE IF EXISTS Direccion;
-DROP TABLE IF EXISTS Producto;
-DROP TABLE IF EXISTS Repartidor;
-DROP TABLE IF EXISTS Asistente;
 DROP TABLE IF EXISTS Telefono;
+DROP TABLE IF EXISTS Asistente;
+DROP TABLE IF EXISTS Repartidor;
+DROP TABLE IF EXISTS Producto;
 DROP TABLE IF EXISTS Empleado;
 DROP TABLE IF EXISTS Pago;
 DROP TABLE IF EXISTS Tarifa;
@@ -230,545 +18,25 @@ DROP TABLE IF EXISTS Cliente;
 GO
 
 -- ==========================================
--- 1. TABLAS MAESTRAS (Sin llaves for�neas)
+-- 1. SECUENCIAS
 -- ==========================================
-
-CREATE TABLE Cliente (
-    IDCliente CHAR(4) PRIMARY KEY,
-    FechaRegistro DATETIME,
-    NombreCliente VARCHAR(30),
-    Nrocelular CHAR(9)
-);
-
-CREATE TABLE Categoria (
-    CodCat CHAR(6) PRIMARY KEY,
-    NombreCat VARCHAR(30)
-);
-
-CREATE TABLE Tarifa (
-    CodTarifa CHAR(3) PRIMARY KEY,
-    NombreTarifa VARCHAR(30),
-    PrecioTarifa FLOAT
-);
-
-CREATE TABLE Pago (
-    CodPago CHAR(5) PRIMARY KEY,
-    MetodoPago VARCHAR(30),
-    FechaPago DATETIME,
-    MontoTotal FLOAT,
-    Observaciones VARCHAR(30),
-    CantDesc FLOAT,
-    IGV FLOAT,
-    CostoTarifa FLOAT
-);
-
--- ==========================================
--- 2. TABLAS DE EMPLEADOS Y CONTACTO
--- ==========================================
-
-CREATE TABLE Empleado (
-    CodEmpleado CHAR(4) PRIMARY KEY,
-    Nombre VARCHAR(30),
-    Numero VARCHAR(10), -- N�mero de calle
-    Direccion VARCHAR(30),
-    CorreoElec VARCHAR(30),
-    AniosExp SMALLINT
-);
-
--- Tabla de tel�fonos normalizada
-CREATE TABLE Telefono (
-    IDTelefono INT IDENTITY(1,1) PRIMARY KEY,
-    CodEmpleado CHAR(4) FOREIGN KEY REFERENCES Empleado(CodEmpleado),
-    NroTelefono VARCHAR(15) NOT NULL
-);
-
-CREATE TABLE Asistente (
-    CodAsistente CHAR(4) PRIMARY KEY,
-    FOREIGN KEY (CodAsistente) REFERENCES Empleado(CodEmpleado)
-);
-
-CREATE TABLE Repartidor (
-    CodRepartidor CHAR(4) PRIMARY KEY,
-    FOREIGN KEY (CodRepartidor) REFERENCES Empleado(CodEmpleado)
-);
-
--- ==========================================
--- 3. TABLAS TRANSACCIONALES Y DEPENDIENTES
--- ==========================================
-
-CREATE TABLE Producto (
-    CodProducto CHAR(5) PRIMARY KEY,
-    NombreProd VARCHAR(30),
-    Stock SMALLINT,
-    PrecioProd FLOAT,
-    CodCat CHAR(6) FOREIGN KEY REFERENCES Categoria(CodCat)
-);
-
-CREATE TABLE Direccion (
-    Ubicacion VARCHAR(30),
-    distrito VARCHAR(30),
-    AreaLoc VARCHAR(30),
-    IDCliente CHAR(4),
-    Numero VARCHAR(10), -- N�mero de calle 
-    PRIMARY KEY (Ubicacion, distrito, AreaLoc, IDCliente),
-    FOREIGN KEY (IDCliente) REFERENCES Cliente(IDCliente)
-);
-
-CREATE TABLE Atencion (
-    IDCliente CHAR(4),
-    CodAsistente CHAR(4),
-    FechaAtencion DATETIME,
-    PRIMARY KEY (IDCliente, CodAsistente),
-    FOREIGN KEY (IDCliente) REFERENCES Cliente(IDCliente),
-    FOREIGN KEY (CodAsistente) REFERENCES Asistente(CodAsistente)
-);
-
--- ==========================================
--- 4. EL N�CLEO: PEDIDO
--- ==========================================
-
-CREATE TABLE Pedido (
-    CodPedido CHAR(5) PRIMARY KEY,
-    Fechasolicitud DATETIME,
-    MontoPedido FLOAT,
-    Estado VARCHAR(30),
-    TiempoEntEstimado DATETIME,
-    TiempoEntReal DATETIME,
-    CodRepartidor CHAR(4) FOREIGN KEY REFERENCES Repartidor(CodRepartidor),
-    IDCliente CHAR(4) FOREIGN KEY REFERENCES Cliente(IDCliente),
-    CodTarifa CHAR(3) FOREIGN KEY REFERENCES Tarifa(CodTarifa),
-    CodPago CHAR(5) FOREIGN KEY REFERENCES Pago(CodPago)
-);
-
--- Tabla intermedia (Relaci�n Muchos a Muchos)
-CREATE TABLE Pedido_Producto (
-    CodProducto CHAR(5),
-    CodPedido CHAR(5),
-    CantProd SMALLINT,
-    PRIMARY KEY (CodProducto, CodPedido),
-    FOREIGN KEY (CodProducto) REFERENCES Producto(CodProducto),
-    FOREIGN KEY (CodPedido) REFERENCES Pedido(CodPedido)
-);
+IF OBJECT_ID('dbo.seq_cliente', 'SO') IS NOT NULL DROP SEQUENCE dbo.seq_cliente;
+IF OBJECT_ID('dbo.seq_empleado', 'SO') IS NOT NULL DROP SEQUENCE dbo.seq_empleado;
+IF OBJECT_ID('dbo.seq_producto', 'SO') IS NOT NULL DROP SEQUENCE dbo.seq_producto;
+IF OBJECT_ID('dbo.seq_pago', 'SO') IS NOT NULL DROP SEQUENCE dbo.seq_pago;
+IF OBJECT_ID('dbo.seq_pedido', 'SO') IS NOT NULL DROP SEQUENCE dbo.seq_pedido;
 GO
 
-USE LaPtiteFranceDB;
-GO
-
-USE LaPtiteFranceDB;
+CREATE SEQUENCE dbo.seq_cliente START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE dbo.seq_empleado START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE dbo.seq_producto START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE dbo.seq_pago START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE dbo.seq_pedido START WITH 1 INCREMENT BY 1;
 GO
 
 -- ==========================================
--- 0. LIMPIEZA TOTAL (De Hijos a Padres)
+-- 2. TABLAS MAESTRAS (Catálogos sin secuencia)
 -- ==========================================
-DELETE FROM Pedido_Producto;
-DELETE FROM Pedido;
-DELETE FROM Atencion;
-DELETE FROM Direccion;
-DELETE FROM Producto;
-DELETE FROM Repartidor;
-DELETE FROM Asistente;
-DELETE FROM Telefono;
-DELETE FROM Empleado;
-DELETE FROM Pago;
-DELETE FROM Tarifa;
-DELETE FROM Categoria;
-DELETE FROM Cliente;
-GO
-
--- ==========================================
--- 1. DATOS MAESTROS
--- ==========================================
-INSERT INTO Categoria (CodCat, NombreCat) VALUES 
-('CAT001', 'Panader�a'),
-('CAT002', 'Pasteler�a'),
-('CAT003', 'Bebidas Calientes'),
-('CAT004', 'S�ndwiches');
-
-INSERT INTO Tarifa (CodTarifa, NombreTarifa, PrecioTarifa) VALUES 
-('T01', 'Zona Local', 5.00),
-('T02', 'Zona Intermedia', 8.50),
-('T03', 'Zona Lejana', 12.00);
-
-INSERT INTO Cliente (IDCliente, FechaRegistro, NombreCliente, Nrocelular) VALUES 
-('C001', GETDATE(), 'Valeria Mendoza', '987654321'),
-('C002', GETDATE(), 'Carlos Ruiz', '912345678'),
-('C003', GETDATE(), 'Sofia Carrillo', '999888777');
-GO
-
--- ==========================================
--- 2. EL EQUIPO DE TRABAJO (Empleados)
--- ==========================================
-INSERT INTO Empleado (CodEmpleado, Nombre, Numero, Direccion, CorreoElec, AniosExp) VALUES 
-('E001', 'Jean Piere Micuilla', '120', 'Av. Arequipa', 'jean@ptitefrance.com', 2),
-('E002', 'Bruno Diaz Seki', '445', 'Av. Javier Prado', 'bruno@ptitefrance.com', 3),
-('E003', 'Alessandra Fuentes', '789', 'Av. La Marina', 'ale@ptitefrance.com', 1),
-('E004', 'Johan Vasquez', '321', 'Calle Los Pinos', 'johan@ptitefrance.com', 2),
-('E005', 'Jazmin Mendoza', '654', 'Av. Salaverry', 'jazmin@ptitefrance.com', 1);
-
-INSERT INTO Telefono (CodEmpleado, NroTelefono) VALUES 
-('E001', '987111222'),
-('E002', '987333444'),
-('E004', '987555666');
-
-INSERT INTO Asistente (CodAsistente) VALUES ('E001'), ('E002'), ('E003');
-INSERT INTO Repartidor (CodRepartidor) VALUES ('E004'), ('E005');
-GO
-
--- ==========================================
--- 3. CAT�LOGO Y DIRECCIONES
--- ==========================================
-INSERT INTO Producto (CodProducto, NombreProd, Stock, PrecioProd, CodCat) VALUES 
-('PR001', 'Croissant Cl�sico', 50, 6.50, 'CAT001'),
-('PR002', 'Pain au Chocolat', 35, 8.00, 'CAT001'),
-('PR003', 'Macaron de Frambuesa', 20, 5.50, 'CAT002'),
-('PR004', 'Caf� Americano', 100, 7.00, 'CAT003'),
-('PR005', 'Baguette Tradicional', 0, 6.00, 'CAT001');
-
-INSERT INTO Direccion (Ubicacion, distrito, AreaLoc, IDCliente, Numero) VALUES 
-('Residencial', 'San Isidro', 'Lima Centro', 'C001', '145'),
-('Oficina', 'Miraflores', 'Lima Sur', 'C002', '890');
-GO
-
--- ==========================================
--- 4. PEDIDOS DE PRUEBA
--- ==========================================
-INSERT INTO Pago (CodPago, MetodoPago, FechaPago, MontoTotal, Observaciones, CantDesc, IGV, CostoTarifa) VALUES 
-('PG001', 'Yape', GETDATE(), 26.00, 'Pago exacto', 0.0, 3.96, 5.00),
-('PG002', 'Tarjeta Visa', GETDATE(), 16.50, 'Sin contacto', 0.0, 2.51, 5.00);
-
-INSERT INTO Pedido (CodPedido, Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, CodRepartidor, IDCliente, CodTarifa, CodPago) VALUES 
-('PD001', GETDATE(), 21.00, 'PENDIENTE', DATEADD(MINUTE, 35, GETDATE()), NULL, 'E004', 'C001', 'T01', 'PG001'),
-('PD002', GETDATE(), 11.50, 'ENTREGADO', DATEADD(MINUTE, 30, GETDATE()), GETDATE(), 'E005', 'C002', 'T01', 'PG002');
-
-INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd) VALUES 
-('PR001', 'PD001', 2),
-('PR002', 'PD001', 1),
-('PR003', 'PD002', 1),
-('PR005', 'PD002', 1);
-GO
-
-
-
-USE LaPtiteFranceDB;
-GO
-
-SELECT 
-    CodPedido, 
-    IdCliente, 
-    MontoPedido, 
-    Estado, 
-    FechaSolicitud 
-FROM 
-    Pedido
-ORDER BY 
-    FechaSolicitud DESC;
-
-
-USE LaPtiteFranceDB;
-GO
-USE LaPtiteFranceDB;
-GO
-
--- ==========================================
--- 0. DESTRUCCI�N SEGURA (Orden inverso: Hijos -> Padres)
--- ==========================================
-DROP TABLE IF EXISTS Pedido_Producto;
-DROP TABLE IF EXISTS Pedido;
-
--- �AQU� EST� LA MAGIA! Borramos las tablas viejas para liberar al Cliente y Asistente
-DROP TABLE IF EXISTS Atencion;
-DROP TABLE IF EXISTS Direccion;
-
-DROP TABLE IF EXISTS Producto;
-DROP TABLE IF EXISTS Repartidor;
-DROP TABLE IF EXISTS Asistente;
-DROP TABLE IF EXISTS Telefono;
-DROP TABLE IF EXISTS Empleado;
-DROP TABLE IF EXISTS Pago;
-DROP TABLE IF EXISTS Tarifa;
-DROP TABLE IF EXISTS Categoria;
-DROP TABLE IF EXISTS Cliente;
-GO
-
--- ==========================================
--- 1. TABLAS MAESTRAS (Sin llaves for�neas)
--- ==========================================
-CREATE TABLE Cliente (
-    IDCliente CHAR(4) PRIMARY KEY,
-    FechaRegistro DATETIME,
-    NombreCliente VARCHAR(30),
-    Nrocelular CHAR(9)
-);
-
-CREATE TABLE Categoria (
-    CodCat CHAR(6) PRIMARY KEY,
-    NombreCat VARCHAR(30)
-);
-
-CREATE TABLE Tarifa (
-    CodTarifa CHAR(3) PRIMARY KEY,
-    NombreZona VARCHAR(30), -- Ej: 'Miraflores', 'Retiro Local'
-    PrecioTarifa FLOAT
-);
-
-CREATE TABLE Pago (
-    CodPago CHAR(5) PRIMARY KEY,
-    MetodoPago VARCHAR(30),
-    FechaPago DATETIME,
-    MontoTotal FLOAT,
-    Observaciones VARCHAR(30),
-    CantDesc FLOAT,
-    IGV FLOAT,
-    CostoTarifa FLOAT
-);
-
--- ==========================================
--- 2. TABLAS DE EMPLEADOS Y CONTACTO
--- ==========================================
-CREATE TABLE Empleado (
-    CodEmpleado CHAR(4) PRIMARY KEY,
-    Nombre VARCHAR(30),
-    Numero VARCHAR(10), -- N�mero de calle
-    Direccion VARCHAR(30),
-    CorreoElec VARCHAR(30),
-    AniosExp SMALLINT
-);
-
--- Tabla de tel�fonos normalizada
-CREATE TABLE Telefono (
-    IDTelefono INT IDENTITY(1,1) PRIMARY KEY,
-    CodEmpleado CHAR(4) FOREIGN KEY REFERENCES Empleado(CodEmpleado),
-    NroTelefono VARCHAR(15) NOT NULL
-);
-
-CREATE TABLE Asistente (
-    CodAsistente CHAR(4) PRIMARY KEY,
-    FOREIGN KEY (CodAsistente) REFERENCES Empleado(CodEmpleado)
-);
-
-CREATE TABLE Repartidor (
-    CodRepartidor CHAR(4) PRIMARY KEY,
-    FOREIGN KEY (CodRepartidor) REFERENCES Empleado(CodEmpleado)
-);
-
--- ==========================================
--- 3. TABLAS TRANSACCIONALES
--- ==========================================
-CREATE TABLE Producto (
-    CodProducto CHAR(5) PRIMARY KEY,
-    NombreProd VARCHAR(30),
-    Stock SMALLINT,
-    PrecioProd FLOAT,
-    CodCat CHAR(6) FOREIGN KEY REFERENCES Categoria(CodCat)
-);
-
--- ==========================================
--- 4. EL N�CLEO: PEDIDO (Reestructurado para UX y Java)
--- ==========================================
-CREATE TABLE Pedido (
-    CodPedido CHAR(5) PRIMARY KEY,
-    Fechasolicitud DATETIME,
-    MontoPedido FLOAT,
-    Estado VARCHAR(30),
-    TiempoEntEstimado DATETIME,
-    TiempoEntReal DATETIME,
-    
-    -- DATOS ABSORBIDOS PARA SIMPLIFICAR LA ARQUITECTURA:
-    DireccionEntrega VARCHAR(100), 
-    CodAsistente CHAR(4) FOREIGN KEY REFERENCES Asistente(CodAsistente), 
-    
-    -- LLAVES FOR�NEAS ORIGINALES:
-    CodRepartidor CHAR(4) FOREIGN KEY REFERENCES Repartidor(CodRepartidor),
-    IDCliente CHAR(4) FOREIGN KEY REFERENCES Cliente(IDCliente),
-    CodTarifa CHAR(3) FOREIGN KEY REFERENCES Tarifa(CodTarifa),
-    CodPago CHAR(5) FOREIGN KEY REFERENCES Pago(CodPago)
-);
-
--- Tabla intermedia (Relaci�n Muchos a Muchos)
-CREATE TABLE Pedido_Producto (
-    CodProducto CHAR(5),
-    CodPedido CHAR(5),
-    CantProd SMALLINT,
-    PRIMARY KEY (CodProducto, CodPedido),
-    FOREIGN KEY (CodProducto) REFERENCES Producto(CodProducto),
-    FOREIGN KEY (CodPedido) REFERENCES Pedido(CodPedido)
-);
-GO
-
-
-USE LaPtiteFranceDB;
-GO
-
--- ==========================================
--- 1. DATOS MAESTROS
--- ==========================================
-INSERT INTO Categoria (CodCat, NombreCat) VALUES 
-('CAT001', 'Panader�a'),
-('CAT002', 'Pasteler�a'),
-('CAT003', 'Bebidas Calientes'),
-('CAT004', 'S�ndwiches');
-
-INSERT INTO Tarifa (CodTarifa, NombreZona, PrecioTarifa) VALUES 
-('T01', 'Zona Local', 5.00),
-('T02', 'Zona Intermedia', 8.50),
-('T03', 'Zona Lejana', 12.00);
-
-INSERT INTO Cliente (IDCliente, FechaRegistro, NombreCliente, Nrocelular) VALUES 
-('C001', GETDATE(), 'Valeria Mendoza', '987654321'),
-('C002', GETDATE(), 'Carlos Ruiz', '912345678'),
-('C003', GETDATE(), 'Sofia Carrillo', '999888777');
-GO
-
--- ==========================================
--- 2. EL EQUIPO DE TRABAJO (Empleados)
--- ==========================================
-INSERT INTO Empleado (CodEmpleado, Nombre, Numero, Direccion, CorreoElec, AniosExp) VALUES 
-('E001', 'Jean Piere Micuilla', '120', 'Av. Arequipa', 'jean@ptitefrance.com', 2),
-('E002', 'Bruno Diaz Seki', '445', 'Av. Javier Prado', 'bruno@ptitefrance.com', 3),
-('E003', 'Alessandra Fuentes', '789', 'Av. La Marina', 'ale@ptitefrance.com', 1),
-('E004', 'Johan Vasquez', '321', 'Calle Los Pinos', 'johan@ptitefrance.com', 2),
-('E005', 'Jazmin Mendoza', '654', 'Av. Salaverry', 'jazmin@ptitefrance.com', 1);
-
-INSERT INTO Telefono (CodEmpleado, NroTelefono) VALUES 
-('E001', '987111222'),
-('E002', '987333444'),
-('E004', '987555666');
-
-INSERT INTO Asistente (CodAsistente) VALUES ('E001'), ('E002'), ('E003');
-INSERT INTO Repartidor (CodRepartidor) VALUES ('E004'), ('E005');
-GO
-
--- ==========================================
--- 3. CAT�LOGO
--- ==========================================
-INSERT INTO Producto (CodProducto, NombreProd, Stock, PrecioProd, CodCat) VALUES 
-('PR001', 'Croissant Cl�sico', 50, 6.50, 'CAT001'),
-('PR002', 'Pain au Chocolat', 35, 8.00, 'CAT001'),
-('PR003', 'Macaron de Frambuesa', 20, 5.50, 'CAT002'),
-('PR004', 'Caf� Americano', 100, 7.00, 'CAT003'),
-('PR005', 'Baguette Tradicional', 0, 6.00, 'CAT001');
-GO
-
--- ==========================================
--- 4. PEDIDOS DE PRUEBA (Reestructurado)
--- ==========================================
-INSERT INTO Pago (CodPago, MetodoPago, FechaPago, MontoTotal, Observaciones, CantDesc, IGV, CostoTarifa) VALUES 
-('PG001', 'Yape', GETDATE(), 26.00, 'Pago exacto', 0.0, 3.96, 5.00),
-('PG002', 'Tarjeta Visa', GETDATE(), 16.50, 'Sin contacto', 0.0, 2.51, 5.00);
-
--- Se a�ade la direcci�n directa y el asistente que atendi�, reemplazando a las tablas eliminadas
-INSERT INTO Pedido (CodPedido, Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago) VALUES 
-('P0001', GETDATE(), 21.00, 'PENDIENTE', DATEADD(MINUTE, 35, GETDATE()), NULL, 'Residencial San Isidro 145', 'E001', 'E004', 'C001', 'T01', 'PG001'),
-('P0002', GETDATE(), 11.50, 'ENTREGADO', DATEADD(MINUTE, 30, GETDATE()), GETDATE(), 'Oficina Miraflores 890', 'E002', 'E005', 'C002', 'T01', 'PG002');
-
-INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd) VALUES 
-('PR001', 'P0001', 2),
-('PR002', 'P0001', 1),
-('PR003', 'P0002', 1),
-('PR005', 'P0002', 1);
-GO
-
-USE LaPtiteFranceDB;
-GO
-USE LaPtiteFranceDB;
-GO
-
--- ==========================================
--- 1. LIMPIEZA SEGURA (De hijos a padres)
--- ==========================================
--- Borramos primero los pedidos para liberar las llaves for�neas
-DELETE FROM Pedido_Producto;
-DELETE FROM Pedido;
-
--- Ahora s� podemos borrar las maestras sin que SQL Server se queje
-DELETE FROM Tarifa;
-DELETE FROM Pago;
-GO
-
--- ==========================================
--- 2. INSERTAR ZONAS (Tabla Tarifa)
--- ==========================================
-INSERT INTO Tarifa (CodTarifa, NombreZona, PrecioTarifa) VALUES 
-('T01', 'Retiro en Tienda', 0.00),
-('T02', 'Huaral Centro', 5.00),
-('T03', 'Alrededores Huaral', 8.50);
-GO
-
--- ==========================================
--- 3. INSERTAR M�TODOS DE PAGO (Tabla Pago)
--- ==========================================
--- Acortamos el texto a "Pago por Yape" para no superar los 30 caracteres
-INSERT INTO Pago (CodPago, MetodoPago, FechaPago, MontoTotal, Observaciones, CantDesc, IGV, CostoTarifa) VALUES 
-('PG001', 'Yape', GETDATE(), 0.0, 'Pago por Yape', 0.0, 0.0, 0.0),
-('PG002', 'Efectivo', GETDATE(), 0.0, 'Pago al contado', 0.0, 0.0, 0.0);
-GO
-
-USE LaPtiteFranceDB;
-GO
-
-SELECT 
-    CodPedido, 
-    IDCliente, 
-    MontoPedido, 
-    Estado, 
-    Fechasolicitud,
-    -- ?? �A�adimos lo nuevo para comprobar tu Java!
-    DireccionEntrega, 
-    CodTarifa,        
-    CodPago           
-FROM 
-    Pedido
-ORDER BY 
-    Fechasolicitud DESC;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    USE LaPtiteFranceDB;
-GO
-
--- ==========================================
--- 0. DESTRUCCI�N SEGURA (Orden inverso: Hijos -> Padres)
--- ==========================================
-DROP TABLE IF EXISTS Pedido_Producto;
-DROP TABLE IF EXISTS Pedido;
-
--- Borramos las tablas viejas para liberar al Cliente y Asistente
-DROP TABLE IF EXISTS Atencion;
-DROP TABLE IF EXISTS Direccion;
-
-DROP TABLE IF EXISTS Producto;
-DROP TABLE IF EXISTS Repartidor;
-DROP TABLE IF EXISTS Asistente;
-DROP TABLE IF EXISTS Telefono;
-DROP TABLE IF EXISTS Empleado;
-DROP TABLE IF EXISTS Pago;
-DROP TABLE IF EXISTS Tarifa;
-DROP TABLE IF EXISTS Categoria;
-DROP TABLE IF EXISTS Cliente;
-GO
-
--- ==========================================
--- 1. TABLAS MAESTRAS (Sin llaves for�neas)
--- ==========================================
-CREATE TABLE Cliente (
-    IDCliente CHAR(4) PRIMARY KEY,
-    FechaRegistro DATETIME,
-    NombreCliente VARCHAR(30),
-    Nrocelular CHAR(9)
-);
-
 CREATE TABLE Categoria (
     CodCat CHAR(6) PRIMARY KEY,
     NombreCat VARCHAR(30)
@@ -778,25 +46,21 @@ CREATE TABLE Tarifa (
     CodTarifa CHAR(3) PRIMARY KEY,
     NombreZona VARCHAR(30),
     PrecioTarifa FLOAT,
-    TiempoPromedio INT -- Tiempo logístico en minutos
-);
-
-CREATE TABLE Pago (
-    CodPago CHAR(5) PRIMARY KEY,
-    MetodoPago VARCHAR(30),
-    FechaPago DATETIME,
-    MontoTotal FLOAT,
-    Observaciones VARCHAR(30),
-    CantDesc FLOAT,
-    IGV FLOAT,
-    CostoTarifa FLOAT
+    TiempoPromedio INT
 );
 
 -- ==========================================
--- 2. TABLAS DE EMPLEADOS Y CONTACTO
+-- 3. TABLAS CON CRECIMIENTO (Con secuencias por DEFAULT)
 -- ==========================================
+CREATE TABLE Cliente (
+    IDCliente CHAR(4) PRIMARY KEY DEFAULT ('C' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_cliente AS VARCHAR(10)), 3)),
+    FechaRegistro DATETIME,
+    NombreCliente VARCHAR(30),
+    Nrocelular CHAR(9)
+);
+
 CREATE TABLE Empleado (
-    CodEmpleado CHAR(4) PRIMARY KEY,
+    CodEmpleado CHAR(4) PRIMARY KEY DEFAULT ('E' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_empleado AS VARCHAR(10)), 3)),
     Nombre VARCHAR(30),
     Numero VARCHAR(10), 
     Direccion VARCHAR(30),
@@ -811,41 +75,43 @@ CREATE TABLE Telefono (
 );
 
 CREATE TABLE Asistente (
-    CodAsistente CHAR(4) PRIMARY KEY,
-    FOREIGN KEY (CodAsistente) REFERENCES Empleado(CodEmpleado)
+    CodAsistente CHAR(4) PRIMARY KEY FOREIGN KEY REFERENCES Empleado(CodEmpleado)
 );
 
 CREATE TABLE Repartidor (
-    CodRepartidor CHAR(4) PRIMARY KEY,
-    FOREIGN KEY (CodRepartidor) REFERENCES Empleado(CodEmpleado)
+    CodRepartidor CHAR(4) PRIMARY KEY FOREIGN KEY REFERENCES Empleado(CodEmpleado)
 );
 
--- ==========================================
--- 3. TABLAS TRANSACCIONALES
--- ==========================================
+CREATE TABLE Pago (
+    CodPago CHAR(5) PRIMARY KEY DEFAULT ('PG' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_pago AS VARCHAR(10)), 3)),
+    MetodoPago VARCHAR(30),
+    FechaPago DATETIME,
+    MontoTotal FLOAT,
+    Observaciones VARCHAR(30),
+    CantDesc FLOAT,
+    IGV FLOAT,
+    CostoTarifa FLOAT
+);
+
 CREATE TABLE Producto (
-    CodProducto CHAR(5) PRIMARY KEY,
+    CodProducto CHAR(5) PRIMARY KEY DEFAULT ('PR' + RIGHT('000' + CAST(NEXT VALUE FOR dbo.seq_producto AS VARCHAR(10)), 3)),
     NombreProd VARCHAR(30),
     Stock SMALLINT,
     PrecioProd FLOAT,
-    CodCat CHAR(6) FOREIGN KEY REFERENCES Categoria(CodCat)
+    CodCat CHAR(6) FOREIGN KEY REFERENCES Categoria(CodCat),
+    Activo BIT NOT NULL DEFAULT 1
 );
 
--- ==========================================
--- 4. EL N�CLEO: PEDIDO
--- ==========================================
 CREATE TABLE Pedido (
-    CodPedido CHAR(5) PRIMARY KEY,
+    CodPedido CHAR(5) PRIMARY KEY DEFAULT ('P' + RIGHT('0000' + CAST(NEXT VALUE FOR dbo.seq_pedido AS VARCHAR(10)), 4)),
     Fechasolicitud DATETIME,
     MontoPedido FLOAT,
     Estado VARCHAR(30),
     TiempoEntEstimado DATETIME,
     TiempoEntReal DATETIME,
-    HoraEnvio DATETIME, -- Hora en la que se despacha (asigna repartidor)
-
+    HoraEnvio DATETIME,
     DireccionEntrega VARCHAR(100), 
     CodAsistente CHAR(4) FOREIGN KEY REFERENCES Asistente(CodAsistente), 
-    
     CodRepartidor CHAR(4) FOREIGN KEY REFERENCES Repartidor(CodRepartidor),
     IDCliente CHAR(4) FOREIGN KEY REFERENCES Cliente(IDCliente),
     CodTarifa CHAR(3) FOREIGN KEY REFERENCES Tarifa(CodTarifa),
@@ -853,99 +119,218 @@ CREATE TABLE Pedido (
 );
 
 CREATE TABLE Pedido_Producto (
-    CodProducto CHAR(5),
-    CodPedido CHAR(5),
+    CodProducto CHAR(5) FOREIGN KEY REFERENCES Producto(CodProducto),
+    CodPedido CHAR(5) FOREIGN KEY REFERENCES Pedido(CodPedido),
     CantProd SMALLINT,
-    PRIMARY KEY (CodProducto, CodPedido),
-    FOREIGN KEY (CodProducto) REFERENCES Producto(CodProducto),
-    FOREIGN KEY (CodPedido) REFERENCES Pedido(CodPedido)
+    PRIMARY KEY (CodProducto, CodPedido)
 );
 GO
 
 -- ==========================================
--- 5. INSERCI�N DE DATOS LIMPIOS Y CORREGIDOS
+-- 4. INSERCIÓN DE DATOS (Sincronización Simple)
 -- ==========================================
 
--- Categor�as
+-- Catálogos (Insertamos con códigos fijos)
 INSERT INTO Categoria (CodCat, NombreCat) VALUES 
-('CAT001', 'Panader�a'),
-('CAT002', 'Pasteler�a'),
-('CAT003', 'Bebidas Calientes'),
-('CAT004', 'S�ndwiches');
+('CAT001', 'Panadería'), ('CAT002', 'Pastelería'), ('CAT003', 'Bebidas Calientes'), ('CAT004', 'Sándwiches');
 
--- Tarifas (Zonas actualizadas)
 INSERT INTO Tarifa (CodTarifa, NombreZona, PrecioTarifa, TiempoPromedio) VALUES 
-('T01', 'Retiro en Tienda', 0.00, 5),
-('T02', 'Huaral Centro', 5.00, 20),
-('T03', 'Alrededores Huaral', 8.50, 45);
+('T01', 'Retiro en Tienda', 0.00, 5), ('T02', 'Huaral Centro', 5.00, 20), ('T03', 'Alrededores Huaral', 8.50, 45);
 
--- Clientes
-INSERT INTO Cliente (IDCliente, FechaRegistro, NombreCliente, Nrocelular) VALUES 
-('C001', GETDATE(), 'Valeria Mendoza', '987654321'),
-('C002', GETDATE(), 'Carlos Ruiz', '912345678'),
-('C003', GETDATE(), 'Sofia Carrillo', '999888777');
+-- Entidades base
+INSERT INTO Cliente (FechaRegistro, NombreCliente, Nrocelular) VALUES 
+(GETDATE(), 'Valeria Mendoza', '987654321'), (GETDATE(), 'Carlos Ruiz', '912345678'), (GETDATE(), 'Sofia Carrillo', '999888777');
 
--- Empleados
-INSERT INTO Empleado (CodEmpleado, Nombre, Numero, Direccion, CorreoElec, AniosExp) VALUES 
-('E001', 'Jean Piere Micuilla', '120', 'Av. Arequipa', 'jean@ptitefrance.com', 2),
-('E002', 'Bruno Diaz Seki', '445', 'Av. Javier Prado', 'bruno@ptitefrance.com', 3),
-('E003', 'Alessandra Fuentes', '789', 'Av. La Marina', 'ale@ptitefrance.com', 1),
-('E004', 'Johan Vasquez', '321', 'Calle Los Pinos', 'johan@ptitefrance.com', 2),
-('E005', 'Jazmin Mendoza', '654', 'Av. Salaverry', 'jazmin@ptitefrance.com', 1);
+INSERT INTO Empleado (Nombre, Numero, Direccion, CorreoElec, AniosExp) VALUES 
+('Jean Piere Micuilla', '120', 'Av. Arequipa', 'jean@ptitefrance.com', 2),
+('Bruno Diaz Seki', '445', 'Av. Javier Prado', 'bruno@ptitefrance.com', 3),
+('Alessandra Fuentes', '789', 'Av. La Marina', 'ale@ptitefrance.com', 1),
+('Johan Vasquez', '321', 'Calle Los Pinos', 'johan@ptitefrance.com', 2),
+('Jazmin Mendoza', '654', 'Av. Salaverry', 'jazmin@ptitefrance.com', 1);
 
 INSERT INTO Telefono (CodEmpleado, NroTelefono) VALUES 
-('E001', '987111222'),
-('E002', '987333444'),
-('E004', '987555666');
+('E001', '987111222'), ('E002', '987333444'), ('E004', '987555666');
 
--- Asignaci�n de Roles
 INSERT INTO Asistente (CodAsistente) VALUES ('E001'), ('E002'), ('E003');
 INSERT INTO Repartidor (CodRepartidor) VALUES ('E004'), ('E005');
 
--- Productos
-INSERT INTO Producto (CodProducto, NombreProd, Stock, PrecioProd, CodCat) VALUES 
-('PR001', 'Croissant Cl�sico', 50, 6.50, 'CAT001'),
-('PR002', 'Pain au Chocolat', 35, 8.00, 'CAT001'),
-('PR003', 'Macaron de Frambuesa', 20, 5.50, 'CAT002'),
-('PR004', 'Caf� Americano', 100, 7.00, 'CAT003'),
-('PR005', 'Baguette Tradicional', 0, 6.00, 'CAT001');
+INSERT INTO Producto (NombreProd, Stock, PrecioProd, CodCat) VALUES 
+('Croissant Clásico', 50, 6.50, 'CAT001'),
+('Pain au Chocolat', 35, 8.00, 'CAT001'),
+('Macaron de Frambuesa', 20, 5.50, 'CAT002'),
+('Café Americano', 100, 7.00, 'CAT003'),
+('Baguette Tradicional', 0, 6.00, 'CAT001');
 
--- Pagos (Solo Yape y Efectivo)
-INSERT INTO Pago (CodPago, MetodoPago, FechaPago, MontoTotal, Observaciones, CantDesc, IGV, CostoTarifa) VALUES 
-('PG001', 'Yape', GETDATE(), 0.0, 'Pago por Yape', 0.0, 0.0, 0.0),
-('PG002', 'Efectivo', GETDATE(), 0.0, 'Pago al contado', 0.0, 0.0, 0.0);
-
--- Pedidos de Prueba adaptados a los nuevos datos
-USE LaPtiteFranceDB;
-GO
-
--- ... (Mant�n toda la estructura de tablas anterior igual) ...
-
--- Pedidos de Prueba con Estados Vitales
-INSERT INTO Pedido (CodPedido, Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago) VALUES 
-('P0001', GETDATE(), 21.00, 'EN ESPERA', DATEADD(MINUTE, 35, GETDATE()), NULL, 'Residencial San Isidro 145', 'E001', 'E004', 'C001', 'T01', 'PG001'),
-('P0002', GETDATE(), 11.50, 'ENTREGADO', DATEADD(MINUTE, 30, GETDATE()), GETDATE(), 'Oficina Miraflores 890', 'E002', 'E005', 'C002', 'T02', 'PG002');
-GO
-
-INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd) VALUES 
-('PR001', 'P0001', 2),
-('PR002', 'P0001', 1),
-('PR003', 'P0002', 1),
-('PR005', 'P0002', 1);
-GO
+INSERT INTO Pago (MetodoPago, FechaPago, MontoTotal, Observaciones, CantDesc, IGV, CostoTarifa) VALUES 
+('Yape', GETDATE(), 0.0, 'Pago por Yape', 0.0, 0.0, 0.0),
+('Efectivo', GETDATE(), 0.0, 'Pago al contado', 0.0, 0.0, 0.0);
 
 -- ==========================================
--- 6. VERIFICACI�N FINAL
+-- 4B. DATOS EXTRA (40 usuarios y 40 productos) para probar paginado
+-- ==========================================
+
+-- 40 usuarios extra (clientes)
+DECLARE @u INT = 4;
+WHILE @u < 44
+BEGIN
+    INSERT INTO Cliente (FechaRegistro, NombreCliente, Nrocelular)
+    VALUES (
+        DATEADD(MINUTE, -(@u * 2), GETDATE()),
+        'Cliente ' + CAST(@u AS VARCHAR(10)),
+        RIGHT('9' + CAST(@u AS VARCHAR(10)), 9)
+    );
+    SET @u = @u + 1;
+END;
+
+-- 40 productos extra
+DECLARE @pr INT = 6;
+WHILE @pr < 46
+BEGIN
+    DECLARE @codCat CHAR(6);
+    SET @codCat = CASE
+        WHEN (@pr % 4) = 1 THEN 'CAT001'
+        WHEN (@pr % 4) = 2 THEN 'CAT002'
+        WHEN (@pr % 4) = 3 THEN 'CAT003'
+        ELSE 'CAT004'
+    END;
+
+    INSERT INTO Producto (NombreProd, Stock, PrecioProd, CodCat, Activo)
+    VALUES (
+        'Producto ' + CAST(@pr AS VARCHAR(10)),
+        (@pr % 50) + 1,
+        CAST((@pr * 1.1) AS FLOAT) / 10.0,
+        @codCat,
+        1
+    );
+
+    SET @pr = @pr + 1;
+END;
+
+-- ==========================================
+-- 5. SINCRONIZACIÓN PERFECTA (Pedidos + Detalles)
+-- Estrategia B: NO hardcodear CodPedido. Capturar el CodPedido real generado.
+-- ==========================================
+GO
+
+DECLARE @CodPedido1 CHAR(5);
+DECLARE @CodPedido2 CHAR(5);
+
+DECLARE @t TABLE (CodPedido CHAR(5));
+
+-- Insertar muchos pedidos para probar paginado (120 escenarios => ~240 pedidos aprox.)
+DECLARE @i INT = 1;
+DECLARE @CodPedido CHAR(5);
+
+WHILE @i <= 120
+BEGIN
+    -- ===== Pedido EN ESPERA =====
+    DELETE FROM @t;
+
+    INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
+    OUTPUT INSERTED.CodPedido INTO @t
+    VALUES
+    (DATEADD(MINUTE, -(@i * 3), GETDATE()),
+     (15.00 + (@i * 0.10)),
+     'EN ESPERA',
+     DATEADD(MINUTE, 35 + (@i % 10), GETDATE()),
+     NULL,
+     'Residencial San Isidro ' + CAST(@i AS VARCHAR(10)),
+     CASE WHEN (@i % 2) = 0 THEN 'E001' ELSE 'E002' END,
+     CASE WHEN (@i % 2) = 0 THEN 'E004' ELSE 'E005' END,
+     CASE WHEN (@i % 3) = 0 THEN 'C001' WHEN (@i % 3) = 1 THEN 'C002' ELSE 'C003' END,
+     'T01',
+     'PG001');
+
+    SELECT TOP 1 @CodPedido = CodPedido FROM @t;
+
+    -- Detalle EN ESPERA (2 a 3 ítems)
+    INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd)
+    VALUES
+    ('PR001', @CodPedido, 1 + (@i % 3)),
+    ('PR002', @CodPedido, 1 + (@i % 2)),
+    ('PR003', @CodPedido, 1 + (@i % 4));
+
+    -- ===== Pedido EN CAMINO =====
+    DELETE FROM @t;
+
+    INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
+    OUTPUT INSERTED.CodPedido INTO @t
+    VALUES
+    (DATEADD(MINUTE, -(@i * 3) - 1, GETDATE()),
+     (12.00 + (@i * 0.07)),
+     'EN CAMINO',
+     DATEADD(MINUTE, 20 + (@i % 15), GETDATE()),
+     NULL,
+     'Av. Camino Real ' + CAST(@i AS VARCHAR(10)),
+     CASE WHEN (@i % 2) = 0 THEN 'E002' ELSE 'E001' END,
+     CASE WHEN (@i % 2) = 0 THEN 'E005' ELSE 'E004' END,
+     CASE WHEN (@i % 3) = 0 THEN 'C002' WHEN (@i % 3) = 1 THEN 'C001' ELSE 'C003' END,
+     'T02',
+     'PG002');
+
+    SELECT TOP 1 @CodPedido = CodPedido FROM @t;
+
+    INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd)
+    VALUES
+    ('PR004', @CodPedido, 1 + (@i % 5)),
+    ('PR001', @CodPedido, 1 + (@i % 2));
+
+    -- ===== Pedido ENTREGADO =====
+    DELETE FROM @t;
+
+    INSERT INTO Pedido (Fechasolicitud, MontoPedido, Estado, TiempoEntEstimado, TiempoEntReal, DireccionEntrega, CodAsistente, CodRepartidor, IDCliente, CodTarifa, CodPago)
+    OUTPUT INSERTED.CodPedido INTO @t
+    VALUES
+    (DATEADD(MINUTE, -(@i * 4), GETDATE()),
+     (10.00 + (@i * 0.08)),
+     'ENTREGADO',
+     DATEADD(MINUTE, 25 + (@i % 12), GETDATE()),
+     DATEADD(MINUTE, -(@i % 30), GETDATE()),
+     'Oficina Miraflores ' + CAST(@i AS VARCHAR(10)),
+     CASE WHEN (@i % 2) = 0 THEN 'E002' ELSE 'E001' END,
+     CASE WHEN (@i % 2) = 0 THEN 'E005' ELSE 'E004' END,
+     CASE WHEN (@i % 3) = 0 THEN 'C002' WHEN (@i % 3) = 1 THEN 'C001' ELSE 'C003' END,
+     'T02',
+     'PG002');
+
+    SELECT TOP 1 @CodPedido = CodPedido FROM @t;
+
+    INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd)
+    VALUES
+    ('PR003', @CodPedido, 1 + (@i % 4)),
+    ('PR004', @CodPedido, 1 + (@i % 2));
+
+    SET @i = @i + 1;
+END;
+
+-- ==========================================
+-- 6. VERIFICACIÓN FINAL
 -- ==========================================
 SELECT 
-    CodPedido, 
-    IDCliente, 
-    MontoPedido, 
-    Estado, 
+    CodPedido,
+    IDCliente,
+    MontoPedido,
+    Estado,
     Fechasolicitud,
-    DireccionEntrega, 
-    CodTarifa,        
-    CodPago           
+    DireccionEntrega,
+    CodTarifa,
+    CodPago
+FROM 
+    Pedido
+ORDER BY 
+    Fechasolicitud DESC;
+GO
+
+-- (2) Vista rápida extra igual que tu script original
+SELECT 
+    CodPedido,
+    IDCliente,
+    MontoPedido,
+    Estado,
+    Fechasolicitud,
+    DireccionEntrega,
+    CodTarifa,
+    CodPago
 FROM 
     Pedido
 ORDER BY 
