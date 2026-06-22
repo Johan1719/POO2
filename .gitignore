@@ -1,0 +1,9 @@
+# Artefactos de compilación de Maven
+target/
+
+# Scratch del flujo de desarrollo (subagent-driven)
+.superpowers/
+
+# Logs y salidas temporales de pruebas
+*.log
+test_*.txt
