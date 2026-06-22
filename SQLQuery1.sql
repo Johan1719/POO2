@@ -1,11 +1,4 @@
-
-
-
-
-
-
-
-    USE LaPtiteFranceDB;
+USE LaPtiteFranceDB;
 GO
 
 -- ==========================================
