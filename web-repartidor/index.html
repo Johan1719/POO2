@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Repartidor - Pedidos</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    input, button { padding: 10px; font-size: 14px; }
+    button { cursor: pointer; }
+    button.primary { background: #2ecc71; border: 0; color: white; font-weight: 700; }
+    button.ghost { background: #ecf0f1; border: 0; font-weight: 700; }
+    #status { margin-top: 12px; white-space: pre-wrap; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #f7f7f7; }
+    .muted { color: #666; font-size: 12px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #f1f1f1; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Repartidor</h1>
+  <p class="muted">Vista simple (sin librerías externas) que consume la API de <code>ApiRepartidor</code>.</p>
+
+  <div class="row">
+    <div>
+      <label for="cod">Código Repartidor</label>
+      <input id="cod" placeholder="Ej: REP01" />
+    </div>
+
+    <div style="padding-bottom: 2px;">
+      <button class="primary" id="btnLoad">Cargar pedidos</button>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <div style="margin-top: 12px;">
+    <span class="muted">Estado de entrega:</span> <span class="badge">Se guarda exactamente como "ENTREGADO"</span>
+  </div>
+
+  <table id="tbl" style="display:none;">
+    <thead>
+      <tr>
+        <th>CodPedido</th>
+        <th>Cliente</th>
+        <th>Dirección</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const statusEl = $('status');
+    const tbl = $('tbl');
+    const tbody = tbl.querySelector('tbody');
+
+    function setStatus(msg) {
+      statusEl.textContent = msg;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '<')
+        .replaceAll('>', '>')
+        .replaceAll('"', '"')
+        .replaceAll("'", '&#039;');
+    }
+
+    function apiBaseUrl() {
+      // La API está en el backend (Javalin) del proyecto.
+      // Para evitar problemas según cómo abras el HTML (file:// o Live Server), fijamos puerto.
+      return 'http://localhost:8080';
+    }
+
+
+    function getCodRepartidor() {
+      const v = $('cod').value.trim();
+      if (v) return v;
+      // permitir ?cod=REP01
+      try {
+        const params = new URLSearchParams(window.location.search);
+        return (params.get('cod') || '').trim();
+      } catch {
+        return '';
+      }
+    }
+
+    async function loadPedidos({ codRepartidor }) {
+      if (!codRepartidor) throw new Error('Código de repartidor vacío');
+      const baseUrl = apiBaseUrl().replace(/\/$/, '');
+
+      // GET /api/repartidores/{codRepartidor}/pedidos
+      const url = `${baseUrl}/api/repartidores/${encodeURIComponent(codRepartidor)}/pedidos`;
+
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`GET falló (${res.status}). ${text}`);
+      }
+
+      return res.json();
+    }
+
+    async function entregar({ codRepartidor, codPedido }) {
+      if (!codRepartidor) throw new Error('Código de repartidor vacío');
+      if (!codPedido) throw new Error('Código de pedido vacío');
+      const baseUrl = apiBaseUrl().replace(/\/$/, '');
+
+      // POST /api/repartidores/{codRepartidor}/pedidos/{codPedido}/entregar
+      const url = `${baseUrl}/api/repartidores/${encodeURIComponent(codRepartidor)}/pedidos/${encodeURIComponent(codPedido)}/entregar`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({})
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`POST falló (${res.status}). ${text}`);
+      }
+
+      return res.json().catch(() => ({}));
+    }
+
+    function extractRows(data) {
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data.items)) return data.items;
+      if (data && Array.isArray(data.data)) return data.data;
+      if (data && Array.isArray(data.pedidos)) return data.pedidos;
+      return [];
+    }
+
+    function renderRows(pedidos, codRepartidor) {
+      tbody.innerHTML = '';
+      tbl.style.display = '';
+
+
+      pedidos.forEach((p) => {
+        const tr = document.createElement('tr');
+
+        const codPedido = p.codPedido ?? '';
+        const clienteNombre = p.clienteNombre ?? '';
+        const direccion = p.direccionEntrega ?? '';
+
+        tr.innerHTML = `
+          <td>${escapeHtml(codPedido)}</td>
+          <td>${escapeHtml(clienteNombre)}</td>
+          <td>${escapeHtml(direccion)}</td>
+          <td>
+            <button class="ghost" data-codped="${escapeHtml(codPedido)}" ${codPedido ? '' : 'disabled'}>
+              ✅ Confirmar entrega
+            </button>
+            <div class="muted" style="margin-top:6px;">Actualiza Estado a <b>ENTREGADO</b></div>
+          </td>
+        `;
+
+        tr.querySelector('button').addEventListener('click', async (ev) => {
+          const codPedidoBtn = ev.currentTarget.getAttribute('data-codped');
+          if (!codPedidoBtn) return;
+
+          setStatus('Enviando confirmación...');
+          try {
+            await entregar({ codRepartidor, codPedido: codPedidoBtn });
+            setStatus('✅ Entrega confirmada. Recargando pedidos...');
+            const data = await loadPedidos({ codRepartidor });
+            renderRows(extractRows(data), codRepartidor);
+          } catch (e) {
+            setStatus('❌ Error al entregar:\n' + (e?.message || String(e)));
+          }
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function cargarYMostrar() {
+      const codRepartidor = getCodRepartidor();
+      if (!codRepartidor) {
+        setStatus('Ingresa el código de repartidor.');
+        return;
+      }
+
+      // Asegurar input si vino por query string
+      $('cod').value = codRepartidor;
+
+      setStatus('Cargando pedidos...');
+      try {
+        const data = await loadPedidos({ codRepartidor });
+        const rows = extractRows(data);
+        renderRows(rows, codRepartidor);
+        setStatus(`✅ OK. Pedidos cargados: ${rows.length}`);
+      } catch (e) {
+        setStatus('❌ Error al cargar pedidos:\n' + (e?.message || String(e)));
+        tbl.style.display = 'none';
+        tbody.innerHTML = '';
+      }
+    }
+
+    $('btnLoad').addEventListener('click', async () => {
+      await cargarYMostrar();
+    });
+
+    // auto-carga si viene ?cod=... en la URL
+    window.addEventListener('load', () => {
+      const cod = getCodRepartidor();
+      if (cod) cargarYMostrar();
+    });
+  </script>
+</body>
+</html>
+
