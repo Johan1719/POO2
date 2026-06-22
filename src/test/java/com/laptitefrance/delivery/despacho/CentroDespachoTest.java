@@ -122,4 +122,18 @@ class CentroDespachoTest {
         assertEquals("EN CAMINO", repo.findById("P0001").get().getEstado());
         assertEquals("E004", repo.findById("P0001").get().getCodRepartidor());
     }
+
+    @Test
+    void tomarPedidoConCodigoNuloNoLanza() {
+        CentroDespacho centro = new CentroDespacho(new FakePedidoRepository());
+        ResultadoOperacion r = centro.tomarPedido(null, "E004");
+        assertEquals(ResultadoOperacion.Tipo.NO_ENCONTRADO, r.getTipo());
+    }
+
+    @Test
+    void tomarPedidoConRepartidorNuloNoLanza() {
+        CentroDespacho centro = new CentroDespacho(new FakePedidoRepository());
+        ResultadoOperacion r = centro.tomarPedido("P0001", null);
+        assertEquals(ResultadoOperacion.Tipo.REPARTIDOR_NO_DISPONIBLE, r.getTipo());
+    }
 }

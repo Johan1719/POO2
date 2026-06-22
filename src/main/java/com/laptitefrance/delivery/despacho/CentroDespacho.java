@@ -75,6 +75,12 @@ public class CentroDespacho {
 
     /** Varios repartidores pueden llamar a la vez; solo el primero completa la toma. */
     public ResultadoOperacion tomarPedido(String codPedido, String codRepartidor) {
+        if (codPedido == null || codPedido.isBlank()) {
+            return ResultadoOperacion.noEncontrado("Código de pedido vacío.");
+        }
+        if (codRepartidor == null || codRepartidor.isBlank()) {
+            return ResultadoOperacion.repartidorNoDisponible("Código de repartidor vacío.");
+        }
         RepartidorEnLinea rep = repartidoresDisponibles.get(codRepartidor);
         if (rep == null) {
             return ResultadoOperacion.repartidorNoDisponible("Repartidor no conectado: " + codRepartidor);
@@ -218,6 +224,12 @@ public class CentroDespacho {
     // --- Entrega ------------------------------------------------------------
 
     public ResultadoOperacion entregarPedido(String codPedido, String codRepartidor) {
+        if (codPedido == null || codPedido.isBlank()) {
+            return ResultadoOperacion.noEncontrado("Código de pedido vacío.");
+        }
+        if (codRepartidor == null || codRepartidor.isBlank()) {
+            return ResultadoOperacion.repartidorNoDisponible("Código de repartidor vacío.");
+        }
         ReentrantLock lock = lockDe(codPedido);
         lock.lock();
         try {
