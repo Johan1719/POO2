@@ -272,3 +272,48 @@ Cambios a realizar en `README.md`:
   como tal. *(Decisión: incluido en el alcance; mantiene la demo realista sin acoplar los procesos.)*
 - **Nota de seguridad académica:** CORS abierto y credenciales en texto plano, como ya advierte el
   README; no apto para producción.
+
+---
+
+## 12. Decisiones de diseño confirmadas
+
+Estas tres decisiones fueron revisadas y aprobadas explícitamente. Se documentan aquí con la
+alternativa descartada y el motivo, para que queden trazables en la sustentación.
+
+### 12.1 Visibilidad de pedidos nuevos → sondeo periódico (`ScheduledExecutorService`)
+- **Decisión:** el `CentroDespacho` programa un `ScheduledExecutorService` que cada **N segundos**
+  (configurable, valor inicial 5 s) consulta la BD por pedidos en estado `EN ESPERA` y encola los
+  que aún no estén encolados (control con el `Set` `codigosEncolados`).
+- **Por qué:** la API REST y el dashboard Swing son **procesos separados** que no comparten memoria.
+  El dashboard inserta el pedido en SQL Server; el sondeo es lo que permite que la asignación
+  automática "vea" esos pedidos creados *después* de arrancar el servidor, sin acoplar ambos procesos.
+- **Alternativa descartada:** exponer `POST /api/pedidos/{cod}/encolar` para que el dashboard avise
+  al crear un pedido. Se descartó porque **acopla** el dashboard a la API (tendría que conocer su URL
+  y manejar su caída), mientras que el sondeo mantiene los procesos independientes. Coste asumido:
+  un retardo máximo de N segundos entre crear el pedido y encolarlo (irrelevante para la demo).
+- **Idempotencia:** el `Set<String> codigosEncolados` (un `ConcurrentHashMap.newKeySet()`) evita
+  encolar dos veces el mismo pedido entre sondeos consecutivos; un código se retira del set cuando el
+  pedido deja de estar `EN ESPERA` (al ser tomado/asignado).
+
+### 12.2 Granularidad del bloqueo → un `ReentrantLock` por pedido
+- **Decisión:** la sección crítica de tomar/asignar se protege con un candado **por `codPedido`**
+  (`locksPorPedido.computeIfAbsent(cod, k -> new ReentrantLock())`), no con un único lock global.
+- **Por qué:** es el corazón de la solución a la **condición de carrera** y maximiza el paralelismo:
+  dos pedidos distintos se procesan a la vez, pero un mismo pedido nunca se asigna dos veces. Tanto la
+  competencia manual (`tomarPedido`) como la asignación automática (`asignarAutomatico`) usan el
+  **mismo** lock del pedido, por lo que no pueden pisarse entre sí.
+- **Alternativa descartada:** un único `synchronized`/lock global sobre todo el `CentroDespacho`.
+  Se descartó porque **serializa** todas las operaciones (un solo pedido a la vez en todo el sistema),
+  desperdiciando la concurrencia que justamente se quiere demostrar.
+- **Buenas prácticas:** `lock()`/`unlock()` siempre en `try/finally`; la persistencia
+  (`pedidoRepository.update`) ocurre **dentro** del lock para mantener memoria y BD consistentes.
+
+### 12.3 `ApiDeliveryServer` reemplaza a `ApiRepartidor`
+- **Decisión:** el nuevo `ApiDeliveryServer` (en el paquete `despacho`) **sustituye** al actual
+  `controllers/ApiRepartidor`, que es solo un esqueleto con datos simulados (`datosSimulados`) y un
+  único endpoint de prueba. Se elimina `ApiRepartidor`.
+- **Por qué:** mantener dos servidores Javalin sería confuso y redundante; el endpoint simulado ya no
+  aporta valor frente a los endpoints reales. La referencia a `ApiRepartidor` en el README se
+  actualiza al nuevo server.
+- **Alternativa descartada:** conservar `ApiRepartidor` intacto y crear el server aparte. Se descartó
+  para evitar código muerto y dos puntos de entrada REST que compiten por el puerto 8080.
