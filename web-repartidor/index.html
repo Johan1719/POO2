@@ -150,8 +150,9 @@
         const tr = document.createElement('tr');
 
         const codPedido = p.codPedido ?? '';
-        const clienteNombre = p.clienteNombre ?? '';
-        const direccion = p.direccionEntrega ?? '';
+        const clienteNombre = p.nombreCliente ?? p.clienteNombre ?? '';
+        const direccion = p.ubicacionEntrega ?? p.direccionEntrega ?? '';
+
 
         tr.innerHTML = `
           <td>${escapeHtml(codPedido)}</td>
@@ -162,12 +163,21 @@
               ✅ Confirmar entrega
             </button>
             <div class="muted" style="margin-top:6px;">Actualiza Estado a <b>ENTREGADO</b></div>
+            <div class="muted" style="margin-top:4px; font-size:11px;">
+              (Se mostrará un confirm antes de enviar)
+            </div>
           </td>
         `;
 
         tr.querySelector('button').addEventListener('click', async (ev) => {
           const codPedidoBtn = ev.currentTarget.getAttribute('data-codped');
           if (!codPedidoBtn) return;
+
+          const ok = window.confirm(`Confirmar entrega del pedido ${codPedidoBtn}?`);
+          if (!ok) {
+            setStatus('Entrega cancelada.');
+            return;
+          }
 
           setStatus('Enviando confirmación...');
           try {

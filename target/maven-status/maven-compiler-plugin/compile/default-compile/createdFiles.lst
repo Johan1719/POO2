@@ -30,7 +30,6 @@ com\laptitefrance\delivery\repositories\TarifaRepository.class
 com\laptitefrance\delivery\views\PanelMonitorPedidos$1.class
 com\laptitefrance\delivery\models\Repartidor.class
 com\laptitefrance\delivery\views\PanelInventario.class
-com\laptitefrance\delivery\controllers\ApiRepartidor$ClienteApiRow.class
 com\laptitefrance\delivery\controllers\LoginController.class
 com\laptitefrance\delivery\models\Empleado.class
 com\laptitefrance\delivery\repositories\PedidoMonitorPaginationModels.class
@@ -53,7 +52,6 @@ com\laptitefrance\delivery\repositories\RepartidorRepository.class
 com\laptitefrance\delivery\repositories\ProductoRepositoryPagination.class
 com\laptitefrance\delivery\models\Asistente.class
 com\laptitefrance\delivery\repositories\PedidoMonitorRepositoryPagination.class
-com\laptitefrance\delivery\controllers\ApiRepartidor$PedidoAsignadoApiRow.class
 com\laptitefrance\delivery\models\Cliente.class
 com\laptitefrance\delivery\exceptions\ValidationException.class
 com\laptitefrance\delivery\repositories\AsistenteRepository.class
