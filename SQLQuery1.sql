@@ -337,3 +337,7 @@ ORDER BY
     Fechasolicitud DESC;
 GO
 
+USE LaPtiteFranceDB;
+GO
+
+select * from repartidor

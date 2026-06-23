@@ -10,11 +10,13 @@ C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefr
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\controllers\RepartidorMonitorController.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\controllers\TarifaController.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\dtos\PedidoMonitorRow.java
+C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\dtos\PedidoRepartidorApiRow.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\dtos\RepartidorMonitorRow.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\exceptions\DomainException.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\exceptions\DuplicateException.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\exceptions\NotFoundException.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\exceptions\ValidationException.java
+C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\MainAll.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\models\Asistente.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\models\Categoria.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\models\Cliente.java
@@ -40,6 +42,7 @@ C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefr
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\repositories\ProductoRepository.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\repositories\ProductoRepositoryPagination.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\repositories\RepartidorMonitorRepository.java
+C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\repositories\RepartidorPedidosRepository.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\repositories\RepartidorRepository.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\repositories\TarifaRepository.java
 C:\Users\bruno\Documents\programacion\Proyectos\POO2\src\main\java\com\laptitefrance\delivery\repositories\TelefonoRepository.java
