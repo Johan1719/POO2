@@ -48,6 +48,18 @@ public class Tarifa {
         this.tiempoPromedio = tiempoPromedio;
     }
 
+    /**
+     * Una tarifa representa recojo en tienda si no tiene costo de envío
+     * (precio 0) o si su nombre de zona menciona "retiro"/"tienda".
+     */
+    public boolean esRecojo() {
+        if (precioTarifa == 0.0) {
+            return true;
+        }
+        String zona = nombreZona == null ? "" : nombreZona.toLowerCase();
+        return zona.contains("retiro") || zona.contains("tienda");
+    }
+
     @Override
     public String toString() {
         return codTarifa + " - " + nombreZona + " (S/ " + precioTarifa + ")";
