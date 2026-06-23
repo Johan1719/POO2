@@ -30,6 +30,25 @@ public class DashboardAsistenteView extends JFrame {
     }
 
     private void inicializarComponentes() {
+        // --- Barra superior: usuario actual + cerrar sesión ---
+        JPanel barraSuperior = new JPanel(new BorderLayout());
+        barraSuperior.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+
+        JLabel lblUsuario = new JLabel("Asistente: " + asistenteActual.getNombre());
+        lblUsuario.setFont(new Font("Arial", Font.BOLD, 13));
+        barraSuperior.add(lblUsuario, BorderLayout.WEST);
+
+        JButton btnCerrarSesion = new JButton("Cerrar Sesión");
+        btnCerrarSesion.setBackground(new Color(231, 76, 60));
+        btnCerrarSesion.setForeground(Color.WHITE);
+        btnCerrarSesion.addActionListener(e -> cerrarSesion());
+
+        JPanel panelDerecha = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        panelDerecha.add(btnCerrarSesion);
+        barraSuperior.add(panelDerecha, BorderLayout.EAST);
+
+        add(barraSuperior, BorderLayout.NORTH);
+
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 14));
 
@@ -63,5 +82,23 @@ public class DashboardAsistenteView extends JFrame {
         });
 
         add(tabbedPane, BorderLayout.CENTER);
+    }
+
+    private void cerrarSesion() {
+        String[] opciones = {"Aceptar", "Cancelar"};
+        int respuesta = JOptionPane.showOptionDialog(
+                this,
+                "¿Seguro que quieres cerrar sesión?",
+                "Cerrar sesión",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[1]);
+
+        if (respuesta == 0) { // Aceptar
+            dispose();
+            new LoginView().setVisible(true);
+        }
     }
 }
