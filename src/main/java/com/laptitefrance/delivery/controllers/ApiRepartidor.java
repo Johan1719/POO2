@@ -60,10 +60,19 @@ public class ApiRepartidor {
             // Mostrar SOLO pedidos pendientes del repartidor (definido como EN CAMINO)
             try {
                 RepartidorPedidosRepository repo = new RepartidorPedidosRepository();
+
+                String nombreRepartidor = repo.obtenerNombreRepartidor(codRepartidor.trim());
+                if (nombreRepartidor == null) {
+                    ctx.status(404).json(Map.of("error", "Repartidor no encontrado", "codRepartidor", codRepartidor));
+                    return;
+                }
+
                 List<PedidoRepartidorApiRow> pedidos = listarPedidosPorRepartidor(repo, codRepartidor.trim(), "EN CAMINO", 1, 1000);
 
-
-                ctx.json(Map.of("codRepartidor", codRepartidor, "pedidos", pedidos));
+                ctx.json(Map.of(
+                        "codRepartidor", codRepartidor,
+                        "nombreRepartidor", nombreRepartidor,
+                        "pedidos", pedidos));
             } catch (Throwable ex) {
 
                 // Depuración: devolver el error exacto para corregir el 500.
