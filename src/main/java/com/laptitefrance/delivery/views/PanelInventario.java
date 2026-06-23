@@ -129,6 +129,11 @@ public class PanelInventario extends JPanel {
         repaint();
     }
 
+    /** Recarga el inventario desde la BD (respeta el filtro de búsqueda actual). */
+    public void refrescar() {
+        cargarInventario(txtBuscar == null ? "" : txtBuscar.getText());
+    }
+
     private void cargarInventario(String filtro) {
         modeloProductos.setRowCount(0);
         try {

@@ -412,6 +412,13 @@ public class PanelNuevaVenta extends JPanel {
         totalCarrito = 0.0;
         actualizarTotal();
         tablaMenu.clearSelection();
+        // Recargar el menú para reflejar el stock actualizado tras la venta.
+        cargarMenu();
+    }
+
+    /** Recarga el menú desde la BD (stock actual). Útil al volver a esta pestaña. */
+    public void recargarMenu() {
+        cargarMenu();
     }
 
     private void actualizarMenuYCarrito() {

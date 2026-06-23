@@ -51,6 +51,16 @@ public class DashboardAsistenteView extends JFrame {
         PanelInventario panelInventario = new PanelInventario(new ProductoController());
         tabbedPane.addTab("📦 Inventario", panelInventario);
 
+        // Al cambiar de pestaña, refrescar el panel que se muestra para reflejar
+        // cambios de stock hechos en otra pestaña (ventas <-> inventario).
+        tabbedPane.addChangeListener(e -> {
+            Component seleccionado = tabbedPane.getSelectedComponent();
+            if (seleccionado == panelInventario) {
+                panelInventario.refrescar();
+            } else if (seleccionado == panelNuevaVenta) {
+                panelNuevaVenta.recargarMenu();
+            }
+        });
 
         add(tabbedPane, BorderLayout.CENTER);
     }
