@@ -22,6 +22,7 @@
 </head>
 <body>
   <h1>Repartidor</h1>
+  <div id="welcome" style="font-size:18px; font-weight:700; margin:6px 0 14px;"></div>
   <p class="muted">Vista simple (sin librerías externas) que consume la API de <code>ApiRepartidor</code>.</p>
 
   <div class="row">
@@ -58,6 +59,7 @@
     const statusEl = $('status');
     const tbl = $('tbl');
     const tbody = tbl.querySelector('tbody');
+    const welcomeEl = $('welcome');
 
     function setStatus(msg) {
       statusEl.textContent = msg;
@@ -196,6 +198,8 @@
       setStatus('Cargando pedidos...');
       try {
         const data = await loadPedidos({ codRepartidor });
+        const nombre = data && data.nombreRepartidor ? data.nombreRepartidor : '';
+        welcomeEl.textContent = nombre ? `Bienvenido, ${nombre} 👋` : '';
         const rows = extractRows(data);
         renderRows(rows, codRepartidor);
         setStatus(`✅ OK. Pedidos cargados: ${rows.length}`);
@@ -203,6 +207,7 @@
         setStatus('❌ Error al cargar pedidos:\n' + (e?.message || String(e)));
         tbl.style.display = 'none';
         tbody.innerHTML = '';
+        welcomeEl.textContent = '';
       }
     }
 
