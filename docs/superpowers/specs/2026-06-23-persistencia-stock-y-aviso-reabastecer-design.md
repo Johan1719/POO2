@@ -123,3 +123,9 @@ con el nuevo y, cuando hay cambio de stock, delega en `VentaRepository`:
 - Reabastecimiento automático.
 - Reposición de stock al **eliminar** físicamente un pedido (`deleteById`); solo se contempla
   la transición de estado a `CANCELADO`.
+
+## Idea futura (diferida, no en este trabajo)
+
+- **Auditoría de pedidos a archivo:** registrar los pedidos concretados (ENTREGADO) y
+  rechazados/cancelados en un archivo `.txt` o en un Excel que lleve las finanzas. El usuario
+  pidió dejarlo para después y definir entonces el formato y la implementación.
