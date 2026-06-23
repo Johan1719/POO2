@@ -25,13 +25,19 @@ profundo:
    negativo), con un mensaje que nombre el producto y las cantidades.
 4. Tras generar el pedido, si uno o más productos quedaron en stock 0, mostrar una ventana
    de advertencia: "Producto [nombre] ya no tiene stock, se sugiere reabastecer".
+5. Si un pedido se cancela (estado `CANCELADO`), **devolver** el stock de sus ítems, porque
+   el pedido no se concretó. Y si un pedido cancelado se reactiva, volver a descontarlo.
 
 ## Decisiones tomadas
 
+- **Momento del descuento:** el stock se descuenta **al generar** el pedido.
+- **Reposición al cancelar:** al pasar un pedido a `CANCELADO` se devuelve el stock; al
+  reactivarlo (de `CANCELADO` a un estado activo) se vuelve a descontar.
 - **Transacción atómica:** insertar `Pedido` + insertar filas de `Pedido_Producto` +
   descontar stock van en una sola transacción. Si la validación de stock o cualquier paso
-  falla → `rollback` y el pedido no se crea.
+  falla → `rollback` y el pedido no se crea. La cancelación/reactivación también es atómica.
 - **Bloqueo por stock insuficiente** (no se permite sobre-venta; el stock no queda negativo).
+  Aplica tanto al generar como al reactivar un pedido cancelado.
 - **Aviso de stock 0 en ventana propia** tras el mensaje de éxito. Solo stock 0 (sin umbral
   de stock bajo).
 - **Sin cambios de esquema** de la base de datos.
@@ -45,6 +51,9 @@ así que no comparten transacción. Una clase dedicada mantiene la responsabilid
 
 Nuevo DTO **`ItemVenta`** (paquete `dtos`): `codProducto`, `nombreProducto`, `cantidad`.
 Transporta los ítems del carrito desde la vista hasta el repository.
+
+`VentaRepository` también expone la lógica de cancelación/reactivación de stock, ya que
+opera sobre `Pedido_Producto` y `Producto` de forma transaccional.
 
 ## Flujo de datos
 
@@ -63,6 +72,22 @@ Transporta los ítems del carrito desde la vista hasta el repository.
    - Para cada ítem: `UPDATE Producto SET Stock = Stock - ? WHERE CodProducto = ?`.
    - Junta los productos cuyo stock resultante es 0 → los devuelve (`List<String>` nombres).
    - `commit`.
+
+### Cancelación / reactivación de pedido
+
+`PedidoController.actualizarEstadoPedido(codPedido, nuevoEstado)` compara el estado anterior
+con el nuevo y, cuando hay cambio de stock, delega en `VentaRepository`:
+
+- **Activo → `CANCELADO`:** `VentaRepository.reponerStockPorCancelacion(codPedido)` en una
+  transacción: lee las filas de `Pedido_Producto` del pedido, hace
+  `UPDATE Producto SET Stock = Stock + CantProd` por cada ítem, y actualiza el estado del
+  pedido a `CANCELADO`. Si el pedido ya estaba `CANCELADO`, no hace nada (evita doble
+  reposición).
+- **`CANCELADO` → activo (reactivación):** `VentaRepository.descontarStockPorReactivacion(codPedido, nuevoEstado)`
+  en una transacción: valida stock de cada ítem (bloquea con mensaje si no alcanza), descuenta
+  `Stock = Stock - CantProd` y actualiza el estado.
+- **Cualquier otra transición** (sin cruzar el límite de `CANCELADO`): solo actualiza el
+  estado, como hoy.
 
 ## Manejo de errores
 
@@ -87,9 +112,14 @@ Transporta los ítems del carrito desde la vista hasta el repository.
   el stock no cambia.
 - Stock a 0: vender exactamente el stock restante → pedido creado + ventana de aviso de
   reabastecimiento para ese producto; el producto desaparece del menú (filtra stock > 0).
+- Cancelación: marcar un pedido como `CANCELADO` en el monitor → el stock de sus productos
+  vuelve a subir por la cantidad vendida.
+- Reactivación: pasar un pedido `CANCELADO` a un estado activo → el stock se vuelve a
+  descontar (y se bloquea si ya no hay stock suficiente).
 
 ## Fuera de alcance
 
 - Umbral de stock bajo (>0).
 - Reabastecimiento automático.
-- Reposición de stock al cancelar/eliminar un pedido (no contemplado en este cambio).
+- Reposición de stock al **eliminar** físicamente un pedido (`deleteById`); solo se contempla
+  la transición de estado a `CANCELADO`.
