@@ -2,16 +2,20 @@ package com.laptitefrance.delivery.controllers;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import com.laptitefrance.delivery.dtos.ItemVenta;
 import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Cliente;
 import com.laptitefrance.delivery.models.Pedido;
 import com.laptitefrance.delivery.repositories.IRepositorioBase;
 import com.laptitefrance.delivery.repositories.PedidoRepository;
+import com.laptitefrance.delivery.repositories.VentaRepository;
 
 public class PedidoController {
 
@@ -30,19 +34,32 @@ public class PedidoController {
     }
 
     // 👇 VISTA TONTA: Ya no existe capa Service.
-    public void generarPedido(
+    public List<String> generarPedido(
             Cliente cliente,
-            int cantidadProductosEnCarrito,
+            List<ItemVenta> items,
             double total,
             String direccionEntrega,
             String codTarifa,
             String codPago,
             boolean esRecojo
     ) {
-        validarDatosGeneracion(cliente, cantidadProductosEnCarrito, total, direccionEntrega, codTarifa, codPago, esRecojo);
+        validarDatosGeneracion(cliente, items, total, direccionEntrega, codTarifa, codPago, esRecojo);
+
+        // Consolidar ítems por producto (evita violar la PK de Pedido_Producto y suma cantidades).
+        Map<String, ItemVenta> consolidados = new LinkedHashMap<>();
+        for (ItemVenta it : items) {
+            ItemVenta previo = consolidados.get(it.getCodProducto());
+            if (previo == null) {
+                consolidados.put(it.getCodProducto(), it);
+            } else {
+                consolidados.put(it.getCodProducto(),
+                        new ItemVenta(it.getCodProducto(), it.getNombreProducto(),
+                                previo.getCantidad() + it.getCantidad()));
+            }
+        }
 
         Pedido pedido = ensamblarNuevoPedido(cliente, total, direccionEntrega, codTarifa, codPago, this.codCajeroActivo);
-        pedidoRepository.insert(pedido);
+        return new VentaRepository().registrarVenta(pedido, new java.util.ArrayList<>(consolidados.values()));
     }
 
     public List<Pedido> listarPedidos() {
@@ -145,7 +162,7 @@ public class PedidoController {
 
     private static void validarDatosGeneracion(
             Cliente cliente,
-            int cantidadProductosEnCarrito,
+            List<ItemVenta> items,
             double total,
             String direccionEntrega,
             String codTarifa,
@@ -155,7 +172,7 @@ public class PedidoController {
         if (cliente == null) {
             throw new ValidationException("Debe seleccionar un cliente.");
         }
-        if (cantidadProductosEnCarrito == 0) {
+        if (items == null || items.isEmpty()) {
             throw new ValidationException("Debe agregar productos al carrito.");
         }
         if (total <= 0) {
