@@ -103,6 +103,31 @@ public class RepartidorPedidosRepository {
         }
     }
 
+    /**
+     * Devuelve el nombre del repartidor (Empleado) o null si el código no existe.
+     * CodRepartidor es FK a Empleado.CodEmpleado.
+     */
+    public String obtenerNombreRepartidor(String codRepartidor) {
+        String sql =
+                "SELECT e.Nombre " +
+                        "FROM Repartidor r " +
+                        "INNER JOIN Empleado e ON e.CodEmpleado = r.CodRepartidor " +
+                        "WHERE r.CodRepartidor = ?";
+
+        try (Connection con = DBConnection.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, codRepartidor);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("Nombre");
+                }
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al obtener nombre del repartidor: " + e.getMessage(), e);
+        }
+    }
+
     private static LocalDateTime getTimestampAsLocalDateTime(ResultSet rs, String column) throws SQLException {
         Timestamp ts = rs.getTimestamp(column);
         return ts != null ? ts.toLocalDateTime() : null;
