@@ -29,6 +29,10 @@ public class VentaRepository {
     private static final String INSERT_PP = "INSERT INTO Pedido_Producto (CodProducto, CodPedido, CantProd) VALUES (?, ?, ?)";
     private static final String UPDATE_STOCK = "UPDATE Producto SET Stock = ? WHERE CodProducto = ?";
 
+    private static final String SELECT_ITEMS_PEDIDO = "SELECT CodProducto, CantProd FROM Pedido_Producto WHERE CodPedido = ?";
+    private static final String UPDATE_ESTADO = "UPDATE Pedido SET Estado = ? WHERE CodPedido = ?";
+    private static final String SELECT_PRODUCTO_POR_COD = "SELECT NombreProd, Stock FROM Producto WHERE CodProducto = ?";
+
     /**
      * Inserta el pedido y sus ítems, descontando stock, todo en una transacción.
      * @return nombres de productos cuyo stock quedó en 0.
@@ -113,6 +117,105 @@ public class VentaRepository {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error al registrar la venta: " + e.getMessage(), e);
+        }
+    }
+
+    /** Devuelve el stock de los ítems del pedido y fija su estado (cancelación). */
+    public void reponerStockPorCancelacion(String codPedido, String nuevoEstado) {
+        try (Connection con = DBConnection.getConexion()) {
+            con.setAutoCommit(false);
+            try {
+                try (PreparedStatement psItems = con.prepareStatement(SELECT_ITEMS_PEDIDO)) {
+                    psItems.setString(1, codPedido);
+                    try (ResultSet rs = psItems.executeQuery()) {
+                        while (rs.next()) {
+                            String codProducto = rs.getString("CodProducto");
+                            int cant = rs.getShort("CantProd");
+                            int stockActual;
+                            try (PreparedStatement psStock = con.prepareStatement(SELECT_PRODUCTO_POR_COD)) {
+                                psStock.setString(1, codProducto);
+                                try (ResultSet rsStock = psStock.executeQuery()) {
+                                    stockActual = rsStock.next() ? rsStock.getShort("Stock") : 0;
+                                }
+                            }
+                            try (PreparedStatement psUpd = con.prepareStatement(UPDATE_STOCK)) {
+                                psUpd.setShort(1, (short) (stockActual + cant));
+                                psUpd.setString(2, codProducto);
+                                psUpd.executeUpdate();
+                            }
+                        }
+                    }
+                }
+
+                try (PreparedStatement psEstado = con.prepareStatement(UPDATE_ESTADO)) {
+                    psEstado.setString(1, nuevoEstado);
+                    psEstado.setString(2, codPedido);
+                    psEstado.executeUpdate();
+                }
+
+                con.commit();
+            } catch (RuntimeException | SQLException e) {
+                con.rollback();
+                throw e;
+            } finally {
+                con.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al reponer stock por cancelación: " + e.getMessage(), e);
+        }
+    }
+
+    /** Valida y descuenta el stock de los ítems del pedido y fija su estado (reactivación). */
+    public void descontarStockPorReactivacion(String codPedido, String nuevoEstado) {
+        try (Connection con = DBConnection.getConexion()) {
+            con.setAutoCommit(false);
+            try {
+                try (PreparedStatement psItems = con.prepareStatement(SELECT_ITEMS_PEDIDO)) {
+                    psItems.setString(1, codPedido);
+                    try (ResultSet rs = psItems.executeQuery()) {
+                        while (rs.next()) {
+                            String codProducto = rs.getString("CodProducto");
+                            int cant = rs.getShort("CantProd");
+                            String nombre;
+                            int stockActual;
+                            try (PreparedStatement psStock = con.prepareStatement(SELECT_PRODUCTO_POR_COD)) {
+                                psStock.setString(1, codProducto);
+                                try (ResultSet rsStock = psStock.executeQuery()) {
+                                    if (!rsStock.next()) {
+                                        throw new ValidationException("No existe el producto con código: " + codProducto);
+                                    }
+                                    nombre = rsStock.getString("NombreProd");
+                                    stockActual = rsStock.getShort("Stock");
+                                }
+                            }
+                            if (stockActual < cant) {
+                                throw new ValidationException(
+                                        "Stock insuficiente de " + nombre + ": hay " + stockActual + ", pediste " + cant);
+                            }
+                            try (PreparedStatement psUpd = con.prepareStatement(UPDATE_STOCK)) {
+                                psUpd.setShort(1, (short) (stockActual - cant));
+                                psUpd.setString(2, codProducto);
+                                psUpd.executeUpdate();
+                            }
+                        }
+                    }
+                }
+
+                try (PreparedStatement psEstado = con.prepareStatement(UPDATE_ESTADO)) {
+                    psEstado.setString(1, nuevoEstado);
+                    psEstado.setString(2, codPedido);
+                    psEstado.executeUpdate();
+                }
+
+                con.commit();
+            } catch (RuntimeException | SQLException e) {
+                con.rollback();
+                throw e;
+            } finally {
+                con.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al descontar stock por reactivación: " + e.getMessage(), e);
         }
     }
 
