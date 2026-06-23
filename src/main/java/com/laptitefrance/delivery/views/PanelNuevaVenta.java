@@ -19,6 +19,7 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import com.laptitefrance.delivery.controllers.ClienteController;
+import com.laptitefrance.delivery.dtos.ItemVenta;
 import com.laptitefrance.delivery.controllers.PagoController;
 import com.laptitefrance.delivery.controllers.PedidoController;
 import com.laptitefrance.delivery.controllers.ProductoController;
@@ -362,9 +363,18 @@ public class PanelNuevaVenta extends JPanel {
                 }
             }
 
-            pedidoController.generarPedido(
+            // Armar los ítems del carrito (Código, Nombre, Cant) para descontar stock.
+            java.util.List<ItemVenta> items = new java.util.ArrayList<>();
+            for (int i = 0; i < modeloCarrito.getRowCount(); i++) {
+                String codProd = (String) modeloCarrito.getValueAt(i, 0);
+                String nomProd = (String) modeloCarrito.getValueAt(i, 1);
+                int cant = ((Number) modeloCarrito.getValueAt(i, 2)).intValue();
+                items.add(new ItemVenta(codProd, nomProd, cant));
+            }
+
+            java.util.List<String> productosEnCero = pedidoController.generarPedido(
                     clienteSeleccionado,
-                    modeloCarrito.getRowCount(),
+                    items,
                     totalCarrito,
                     direccionEntrega,
                     tarifaSeleccionada.getCodTarifa(),
@@ -378,6 +388,14 @@ public class PanelNuevaVenta extends JPanel {
                     "Transacción Exitosa",
                     JOptionPane.INFORMATION_MESSAGE
             );
+
+            if (productosEnCero != null && !productosEnCero.isEmpty()) {
+                StringBuilder aviso = new StringBuilder();
+                for (String nombre : productosEnCero) {
+                    aviso.append("⚠️ Producto ").append(nombre).append(" ya no tiene stock, se sugiere reabastecer.\n");
+                }
+                JOptionPane.showMessageDialog(this, aviso.toString().trim(), "Reabastecer", JOptionPane.WARNING_MESSAGE);
+            }
 
             limpiarPantalla();
 
