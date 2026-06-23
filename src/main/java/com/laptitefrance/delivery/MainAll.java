@@ -1,37 +1,29 @@
 package com.laptitefrance.delivery;
 
 import com.laptitefrance.delivery.controllers.ApiRepartidor;
+import com.laptitefrance.delivery.views.LoginView;
 
-import io.javalin.Javalin;
-
-import java.util.Objects;
-
-import static io.javalin.Javalin.*;
-
-
-import com.laptitefrance.delivery.controllers.RepartidorMonitorController;
+import javax.swing.SwingUtilities;
 
 
 /**
- * Main único para arrancar el sistema (API + frontend + monitor).
+ * Main único para arrancar el sistema (API REST + ventana de login Swing).
  */
 public class MainAll {
 
     public static void main(String[] args) {
-        // 1) API REST + (si está registrado) servir frontend en /repartidor
-        // ApiRepartidor.main() debe seguir funcionando como antes.
+        // 1) API REST + frontend en /repartidor (Javalin queda escuchando en :8080).
         ApiRepartidor.main(args);
 
-        // 2) Lanzar también el "otro p" (monitor) en background.
-        // RepartidorMonitorController es el controlador de UI/monitor.
-        // Si el monitor abre ventana/panel, se ejecutará en el hilo actual.
-        // Si no aplica, no pasa nada: esta línea garantiza el arranque.
-        try {
-            new RepartidorMonitorController();
-        } catch (Throwable ignored) {
-            // En caso de que el constructor no arranque UI directamente o requiera contexto,
-            // el MainAll igual mantiene operativa la API.
-        }
+        // 2) Ventana de login Swing en el Event Dispatch Thread.
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new LoginView().setVisible(true);
+            } catch (Throwable t) {
+                // No silenciar: si la ventana falla (BD, entorno headless, etc.) hay que verlo.
+                t.printStackTrace();
+            }
+        });
     }
 }
 
