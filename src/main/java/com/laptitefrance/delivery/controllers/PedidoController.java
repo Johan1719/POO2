@@ -36,9 +36,10 @@ public class PedidoController {
             double total,
             String direccionEntrega,
             String codTarifa,
-            String codPago
+            String codPago,
+            boolean esRecojo
     ) {
-        validarDatosGeneracion(cliente, cantidadProductosEnCarrito, total, direccionEntrega, codTarifa, codPago);
+        validarDatosGeneracion(cliente, cantidadProductosEnCarrito, total, direccionEntrega, codTarifa, codPago, esRecojo);
 
         Pedido pedido = ensamblarNuevoPedido(cliente, total, direccionEntrega, codTarifa, codPago, this.codCajeroActivo);
         pedidoRepository.insert(pedido);
@@ -148,7 +149,8 @@ public class PedidoController {
             double total,
             String direccionEntrega,
             String codTarifa,
-            String codPago
+            String codPago,
+            boolean esRecojo
     ) {
         if (cliente == null) {
             throw new ValidationException("Debe seleccionar un cliente.");
@@ -159,7 +161,7 @@ public class PedidoController {
         if (total <= 0) {
             throw new ValidationException("El total del pedido debe ser mayor a 0.");
         }
-        if (direccionEntrega == null || direccionEntrega.trim().isEmpty()) {
+        if (!esRecojo && (direccionEntrega == null || direccionEntrega.trim().isEmpty())) {
             throw new ValidationException("La dirección de entrega no puede estar vacía.");
         }
         if (codTarifa == null || codTarifa.trim().isEmpty()) {
