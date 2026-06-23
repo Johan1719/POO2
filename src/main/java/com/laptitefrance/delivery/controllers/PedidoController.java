@@ -97,6 +97,37 @@ public class PedidoController {
 
 
 
+    /**
+     * Indica si el pedido es de recojo en tienda (no requiere repartidor).
+     * Se detecta por la dirección descriptiva o, por robustez, por la tarifa.
+     */
+    public boolean esPedidoDeRecojo(String codPedido) {
+        if (codPedido == null || codPedido.trim().isEmpty()) {
+            return false;
+        }
+        Pedido pedido = pedidoRepository.findById(codPedido.trim()).orElse(null);
+        if (pedido == null) {
+            return false;
+        }
+
+        String dir = pedido.getDireccionEntrega();
+        if (dir != null && dir.trim().toUpperCase().startsWith("RECOJO EN TIENDA")) {
+            return true;
+        }
+
+        String codTarifa = pedido.getCodTarifa();
+        if (codTarifa != null && !codTarifa.trim().isEmpty()) {
+            com.laptitefrance.delivery.models.Tarifa tarifa =
+                    new com.laptitefrance.delivery.repositories.TarifaRepository()
+                            .findById(codTarifa.trim())
+                            .orElse(null);
+            if (tarifa != null) {
+                return tarifa.esRecojo();
+            }
+        }
+        return false;
+    }
+
     public void asignarRepartidor(String codPedido, String codRepartidor) {
         if (codPedido == null || codPedido.trim().isEmpty()) {
             throw new ValidationException("El código del pedido no puede estar vacío.");

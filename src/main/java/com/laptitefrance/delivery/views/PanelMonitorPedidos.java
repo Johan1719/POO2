@@ -163,6 +163,12 @@ List<com.laptitefrance.delivery.dtos.PedidoMonitorRow> filas =
 
         String codPedido = (String) modeloPedidos.getValueAt(filaSeleccionada, 0);
 
+        // Los pedidos de recojo en tienda no llevan repartidor.
+        if (pedidoController.esPedidoDeRecojo(codPedido)) {
+            mostrarAdvertencia("Este pedido es de RECOJO EN TIENDA: el cliente lo retira, no se le puede asignar repartidor.");
+            return;
+        }
+
         try {
             com.laptitefrance.delivery.controllers.RepartidorMonitorController repartidorController =
                     new com.laptitefrance.delivery.controllers.RepartidorMonitorController();
