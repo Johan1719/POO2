@@ -151,13 +151,29 @@ public class PedidoController {
             throw new ValidationException("Debe proporcionar un estado válido.");
         }
 
-        Pedido pedido = pedidoRepository.findById(codPedido.trim())
-                .orElseThrow(() -> new ValidationException("No existe Pedido con codPedido=" + codPedido));
+        String cod = codPedido.trim();
+        String nuevo = nuevoEstado.trim();
 
-        pedido.setEstado(nuevoEstado.trim());
-        pedidoRepository.update(pedido);
+        Pedido pedido = pedidoRepository.findById(cod)
+                .orElseThrow(() -> new ValidationException("No existe Pedido con codPedido=" + cod));
 
+        String estadoAnterior = pedido.getEstado() == null ? "" : pedido.getEstado().trim();
+        boolean eraCancelado = estadoAnterior.equalsIgnoreCase("CANCELADO");
+        boolean seraCancelado = nuevo.equalsIgnoreCase("CANCELADO");
 
+        VentaRepository ventaRepository = new VentaRepository();
+
+        if (!eraCancelado && seraCancelado) {
+            // Activo -> CANCELADO: devolver stock.
+            ventaRepository.reponerStockPorCancelacion(cod, nuevo);
+        } else if (eraCancelado && !seraCancelado) {
+            // CANCELADO -> activo: volver a descontar stock (valida y bloquea si falta).
+            ventaRepository.descontarStockPorReactivacion(cod, nuevo);
+        } else {
+            // Transición que no cruza el límite de CANCELADO: solo actualizar estado.
+            pedido.setEstado(nuevo);
+            pedidoRepository.update(pedido);
+        }
     }
 
     private static void validarDatosGeneracion(
