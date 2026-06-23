@@ -268,32 +268,6 @@ public class PanelNuevaVenta extends JPanel {
 
     private void generarPedido() {
         try {
-            JTextField txtDireccionEntrega = new JTextField(30);
-
-            List<Tarifa> tarifas = tarifaController.obtenerTarifas();
-            JComboBox<Tarifa> cbxTarifa = new JComboBox<>(tarifas.toArray(new Tarifa[0]));
-
-            List<Pago> pagos = pagoController.obtenerPagos();
-            JComboBox<Pago> cbxPago = new JComboBox<>(pagos.toArray(new Pago[0]));
-
-            Object[] formulario = {
-                    "Dirección de entrega:", txtDireccionEntrega,
-                    "Tarifa:", cbxTarifa,
-                    "Método de pago:", cbxPago
-            };
-
-            int opcion = JOptionPane.showConfirmDialog(
-                    this,
-                    formulario,
-                    "Checkout - Generar Pedido",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE
-            );
-
-            if (opcion != JOptionPane.OK_OPTION) {
-                return;
-            }
-
             if (clienteSeleccionado == null) {
                 throw new ValidationException("Debe seleccionar un cliente.");
             }
@@ -304,26 +278,98 @@ public class PanelNuevaVenta extends JPanel {
                 throw new ValidationException("El total del pedido debe ser mayor a 0.");
             }
 
-            String direccionEntrega = txtDireccionEntrega.getText() == null ? "" : txtDireccionEntrega.getText().trim();
-            if (direccionEntrega.isEmpty()) {
-                throw new ValidationException("La dirección de entrega no puede estar vacía.");
+            // Paso 1: elegir modalidad de entrega.
+            String[] opciones = {"🏪 Recojo en tienda", "🛵 Delivery a domicilio", "Cancelar"};
+            int modalidad = JOptionPane.showOptionDialog(
+                    this,
+                    "¿Cómo se entregará el pedido?",
+                    "Modalidad de entrega",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]
+            );
+
+            if (modalidad != 0 && modalidad != 1) {
+                return; // Cancelar o cerrar
+            }
+
+            boolean esRecojo = (modalidad == 0);
+
+            // Tarifas disponibles, separadas por modalidad.
+            List<Tarifa> todasTarifas = tarifaController.obtenerTarifas();
+            List<Tarifa> tarifasFiltradas = new java.util.ArrayList<>();
+            for (Tarifa t : todasTarifas) {
+                if (t.esRecojo() == esRecojo) {
+                    tarifasFiltradas.add(t);
+                }
+            }
+            if (tarifasFiltradas.isEmpty()) {
+                throw new ValidationException(esRecojo
+                        ? "No hay puntos de recojo configurados."
+                        : "No hay zonas de delivery configuradas.");
+            }
+            JComboBox<Tarifa> cbxTarifa = new JComboBox<>(tarifasFiltradas.toArray(new Tarifa[0]));
+
+            List<Pago> pagos = pagoController.obtenerPagos();
+            JComboBox<Pago> cbxPago = new JComboBox<>(pagos.toArray(new Pago[0]));
+
+            // Paso 2: datos según modalidad.
+            JTextField txtDireccionEntrega = new JTextField(30);
+            Object[] formulario;
+            String tituloDialogo;
+            if (esRecojo) {
+                tituloDialogo = "Checkout - Recojo en tienda";
+                formulario = new Object[]{
+                        "Punto de recojo:", cbxTarifa,
+                        "Método de pago:", cbxPago
+                };
+            } else {
+                tituloDialogo = "Checkout - Delivery";
+                formulario = new Object[]{
+                        "Dirección de entrega:", txtDireccionEntrega,
+                        "Zona / Tarifa:", cbxTarifa,
+                        "Método de pago:", cbxPago
+                };
+            }
+
+            int opcion = JOptionPane.showConfirmDialog(
+                    this,
+                    formulario,
+                    tituloDialogo,
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+            if (opcion != JOptionPane.OK_OPTION) {
+                return;
             }
 
             Tarifa tarifaSeleccionada = (Tarifa) cbxTarifa.getSelectedItem();
             Pago pagoSeleccionado = (Pago) cbxPago.getSelectedItem();
-
             if (tarifaSeleccionada == null || pagoSeleccionado == null) {
                 throw new ValidationException("Debe seleccionar una tarifa y un método de pago.");
             }
 
-            // 👇 VISTA TONTA: Mandamos la orden sin datos del cajero. El Controlador lo resuelve.
+            // Dirección: en recojo se genera un texto descriptivo; en delivery la escribe el cajero.
+            String direccionEntrega;
+            if (esRecojo) {
+                direccionEntrega = "RECOJO EN TIENDA: " + tarifaSeleccionada.getNombreZona();
+            } else {
+                direccionEntrega = txtDireccionEntrega.getText() == null ? "" : txtDireccionEntrega.getText().trim();
+                if (direccionEntrega.isEmpty()) {
+                    throw new ValidationException("La dirección de entrega no puede estar vacía.");
+                }
+            }
+
             pedidoController.generarPedido(
                     clienteSeleccionado,
                     modeloCarrito.getRowCount(),
                     totalCarrito,
                     direccionEntrega,
                     tarifaSeleccionada.getCodTarifa(),
-                    pagoSeleccionado.getCodPago()
+                    pagoSeleccionado.getCodPago(),
+                    esRecojo
             );
 
             JOptionPane.showMessageDialog(
