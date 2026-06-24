@@ -27,23 +27,6 @@ public class Pedido {
     public Pedido() {
     }
 
-    private Pedido(Builder builder) {
-        this.codPedido = builder.codPedido;
-        this.fechaSolicitud = builder.fechaSolicitud;
-        this.montoPedido = builder.montoPedido;
-        this.estado = builder.estado;
-        this.tiempoEntEstimado = builder.tiempoEntEstimado;
-        this.tiempoEntReal = builder.tiempoEntReal;
-        this.codAsistente = builder.codAsistente;
-        this.codRepartidor = builder.codRepartidor;
-        this.idCliente = builder.idCliente;
-        this.codTarifa = builder.codTarifa;
-        this.codPago = builder.codPago;
-        this.direccionEntrega = builder.direccionEntrega;
-    }
-
-
-
     public String getCodPedido() {
         return codPedido;
     }
@@ -147,94 +130,6 @@ public class Pedido {
 
     public void setHoraEnvio(LocalDateTime horaEnvio) {
         this.horaEnvio = horaEnvio;
-    }
-
-
-    /**
-     * Builder (patrón creacional) para construir un Pedido de forma limpia.
-     */
-    public static class Builder {
-        private String codPedido;
-
-        private LocalDateTime fechaSolicitud;
-        private double montoPedido;
-        private String estado;
-        private LocalDateTime tiempoEntEstimado;
-        private LocalDateTime tiempoEntReal;
-        private String codAsistente;
-        private String codRepartidor;
-        private String idCliente;
-        private String codTarifa;
-        private String codPago;
-        private String direccionEntrega;
-
-
-
-        public Builder codPedido(String codPedido) {
-            this.codPedido = codPedido;
-            return this;
-        }
-
-        public Builder fechaSolicitud(LocalDateTime fechaSolicitud) {
-            this.fechaSolicitud = fechaSolicitud;
-            return this;
-        }
-
-        public Builder montoPedido(double montoPedido) {
-            this.montoPedido = montoPedido;
-            return this;
-        }
-
-        public Builder estado(String estado) {
-            this.estado = estado;
-            return this;
-        }
-
-        public Builder tiempoEntEstimado(LocalDateTime tiempoEntEstimado) {
-            this.tiempoEntEstimado = tiempoEntEstimado;
-            return this;
-        }
-
-        public Builder tiempoEntReal(LocalDateTime tiempoEntReal) {
-            this.tiempoEntReal = tiempoEntReal;
-            return this;
-        }
-
-        public Builder codAsistente(String codAsistente) {
-            this.codAsistente = codAsistente;
-            return this;
-        }
-
-        public Builder codRepartidor(String codRepartidor) {
-            this.codRepartidor = codRepartidor;
-            return this;
-        }
-
-        public Builder idCliente(String idCliente) {
-
-            this.idCliente = idCliente;
-            return this;
-        }
-
-        public Builder codTarifa(String codTarifa) {
-            this.codTarifa = codTarifa;
-            return this;
-        }
-
-        public Builder codPago(String codPago) {
-            this.codPago = codPago;
-            return this;
-        }
-
-        public Builder direccionEntrega(String direccionEntrega) {
-            this.direccionEntrega = direccionEntrega;
-            return this;
-        }
-
-        public Pedido build() {
-
-            return new Pedido(this);
-        }
     }
 }
 

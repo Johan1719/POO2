@@ -13,6 +13,7 @@ import com.laptitefrance.delivery.dtos.ItemVenta;
 import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Cliente;
 import com.laptitefrance.delivery.models.Pedido;
+import com.laptitefrance.delivery.models.PedidoBuilder;
 import com.laptitefrance.delivery.repositories.IRepositorioBase;
 import com.laptitefrance.delivery.repositories.PedidoRepository;
 import com.laptitefrance.delivery.repositories.VentaRepository;
@@ -244,32 +245,20 @@ public class PedidoController {
             String codPago,
             String codAsistente
     ) {
-        Pedido pedido = new Pedido();
-
-        // 1. Código único -> se autogenera en SQL mediante SEQUENCE/DEFAULT.
-        // Importante: el repository insert NO debe setear CodPedido manualmente.
-        pedido.setCodPedido(null);
-
-
-        // 2. Datos básicos
-        pedido.setIdCliente(cliente.getIdCliente());
-        pedido.setMontoPedido(total);
-        pedido.setEstado("EN ESPERA");
-        pedido.setFechaSolicitud(LocalDateTime.now());
-
-        // 3. Dirección
-        pedido.setDireccionEntrega(direccionEntrega);
-
-        // 4. FKs y actor
-        pedido.setCodAsistente(codAsistente);
-        pedido.setCodTarifa(codTarifa);
-        pedido.setCodPago(codPago);
-
-        // 5. Repartidor/tiempos aún desconocidos
-        pedido.setCodRepartidor(null);
-        pedido.setTiempoEntEstimado(null);
-        pedido.setTiempoEntReal(null);
-
-        return pedido;
+        // CodPedido se autogenera en SQL (SEQUENCE/DEFAULT); repartidor/tiempos aún desconocidos.
+        return new PedidoBuilder()
+                .codPedido(null)
+                .idCliente(cliente.getIdCliente())
+                .montoPedido(total)
+                .estado("EN ESPERA")
+                .fechaSolicitud(LocalDateTime.now())
+                .direccionEntrega(direccionEntrega)
+                .codAsistente(codAsistente)
+                .codTarifa(codTarifa)
+                .codPago(codPago)
+                .codRepartidor(null)
+                .tiempoEntEstimado(null)
+                .tiempoEntReal(null)
+                .build();
     }
 }
