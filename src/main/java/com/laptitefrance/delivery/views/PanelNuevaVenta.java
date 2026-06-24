@@ -344,10 +344,24 @@ public class PanelNuevaVenta extends JPanel {
                 };
             } else {
                 tituloDialogo = "Checkout - Delivery";
+
+                // Label que muestra Productos / Envío / TOTAL y se actualiza al cambiar la zona.
+                JLabel lblTotalCheckout = new JLabel();
+                Runnable actualizarTotalCheckout = () -> {
+                    Tarifa t = (Tarifa) cbxTarifa.getSelectedItem();
+                    double envio = (t == null) ? 0.0 : t.getPrecioTarifa();
+                    lblTotalCheckout.setText(String.format(
+                            "Productos: S/ %.2f   —   Envío: S/ %.2f   —   TOTAL: S/ %.2f",
+                            totalCarrito, envio, totalCarrito + envio));
+                };
+                actualizarTotalCheckout.run();
+                cbxTarifa.addActionListener(e -> actualizarTotalCheckout.run());
+
                 formulario = new Object[]{
                         "Dirección de entrega:", txtDireccionEntrega,
                         "Zona / Tarifa:", cbxTarifa,
-                        "Método de pago:", cbxPago
+                        "Método de pago:", cbxPago,
+                        lblTotalCheckout
                 };
             }
 
@@ -388,10 +402,13 @@ public class PanelNuevaVenta extends JPanel {
                 items.add(new ItemVenta(codProd, nomProd, cant));
             }
 
+            // Total = productos + costo de envío (en recojo la tarifa vale 0).
+            double montoTotal = totalCarrito + tarifaSeleccionada.getPrecioTarifa();
+
             java.util.List<String> productosEnCero = pedidoController.generarPedido(
                     clienteSeleccionado,
                     items,
-                    totalCarrito,
+                    montoTotal,
                     direccionEntrega,
                     tarifaSeleccionada.getCodTarifa(),
                     pagoSeleccionado.getCodPago(),
@@ -400,7 +417,7 @@ public class PanelNuevaVenta extends JPanel {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "¡Pedido generado exitosamente!\nTotal: S/ " + String.format("%.2f", totalCarrito),
+                    "¡Pedido generado exitosamente!\nTotal: S/ " + String.format("%.2f", montoTotal),
                     "Transacción Exitosa",
                     JOptionPane.INFORMATION_MESSAGE
             );
