@@ -237,6 +237,22 @@ public class PanelNuevaVenta extends JPanel {
             int cant = Integer.parseInt(cantStr);
             if (cant <= 0) throw new NumberFormatException();
 
+            // Stock disponible = stock del menú - unidades de este producto ya en el carrito.
+            int stockMenu = ((Number) modeloMenu.getValueAt(fila, 3)).intValue();
+            int yaEnCarrito = 0;
+            for (int i = 0; i < modeloCarrito.getRowCount(); i++) {
+                if (cod.equals(modeloCarrito.getValueAt(i, 0))) {
+                    yaEnCarrito += ((Number) modeloCarrito.getValueAt(i, 2)).intValue();
+                }
+            }
+            int disponible = stockMenu - yaEnCarrito;
+            if (cant > disponible) {
+                JOptionPane.showMessageDialog(this,
+                        "Stock insuficiente de " + nom + ": disponible " + Math.max(0, disponible) + ".",
+                        "Atención", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
             double sub = pre * cant;
             modeloCarrito.addRow(new Object[]{cod, nom, cant, sub});
 
