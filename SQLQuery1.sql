@@ -135,7 +135,7 @@ INSERT INTO Categoria (CodCat, NombreCat) VALUES
 ('CAT001', 'Panadería'), ('CAT002', 'Pastelería'), ('CAT003', 'Bebidas Calientes'), ('CAT004', 'Sándwiches');
 
 INSERT INTO Tarifa (CodTarifa, NombreZona, PrecioTarifa, TiempoPromedio) VALUES 
-('T01', 'Retiro en Tienda', 0.00, 5), ('T02', 'Huaral Centro', 5.00, 20), ('T03', 'Alrededores Huaral', 8.50, 45);
+('T01', 'Retiro en Tienda', 0.00, 5), ('T02', 'Lima Metropolitana', 5.00, 20), ('T03', 'Callao', 8.50, 45);
 
 -- Entidades base
 INSERT INTO Cliente (FechaRegistro, NombreCliente, Nrocelular) VALUES 
