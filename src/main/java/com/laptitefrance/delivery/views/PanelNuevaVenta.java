@@ -143,6 +143,10 @@ public class PanelNuevaVenta extends JPanel {
         btnQuitar.addActionListener(e -> quitarDelCarrito());
         panelTotal.add(btnQuitar);
 
+        JButton btnVaciar = new JButton("🗑 Vaciar Carrito");
+        btnVaciar.addActionListener(e -> vaciarCarrito());
+        panelTotal.add(btnVaciar);
+
         lblTotal = new JLabel("   Total: S/ 0.00   ");
         lblTotal.setFont(new Font("Arial", Font.BOLD, 18));
         panelTotal.add(lblTotal);
@@ -276,6 +280,15 @@ public class PanelNuevaVenta extends JPanel {
         if (totalCarrito < 0) totalCarrito = 0.0;
 
         modeloCarrito.removeRow(fila);
+        actualizarTotal();
+    }
+
+    private void vaciarCarrito() {
+        if (modeloCarrito.getRowCount() == 0) {
+            return;
+        }
+        modeloCarrito.setRowCount(0);
+        totalCarrito = 0.0;
         actualizarTotal();
     }
 
