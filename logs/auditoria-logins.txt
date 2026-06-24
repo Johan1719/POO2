@@ -1,0 +1,2 @@
+2026-06-24 01:52:06 | EXITO | codigo=E002 | nombre=Bruno Diaz Seki
+2026-06-24 01:53:06 | EXITO | codigo=E001 | nombre=Jean Piere Micuilla
