@@ -18,11 +18,17 @@ import com.laptitefrance.delivery.repositories.IRepositorioBase;
 import com.laptitefrance.delivery.repositories.PedidoRepository;
 import com.laptitefrance.delivery.repositories.VentaRepository;
 
+/**
+ * Controlador de pedidos: orquesta la generación de ventas, el listado/paginado para el
+ * monitor, la asignación de repartidor y los cambios de estado (incluida la cancelación
+ * con devolución de stock). Las vistas le piden acciones; él coordina los repositorios.
+ */
 public class PedidoController {
 
     private final IRepositorioBase<Pedido, String> pedidoRepository;
 
-    // 👇 ESTADO INYECTADO: El controlador sabe quién opera la caja
+    // Estado inyectado: el código del cajero/asistente que tiene la sesión abierta.
+    // Así cada pedido queda asociado a quién lo registró, sin que la vista lo tenga que mandar.
     private final String codCajeroActivo;
 
     public PedidoController(String codCajeroActivo) {
@@ -34,7 +40,19 @@ public class PedidoController {
         this.codCajeroActivo = codCajeroActivo;
     }
 
-    // 👇 VISTA TONTA: Ya no existe capa Service.
+    /**
+     * Genera un pedido completo a partir del carrito.
+     *
+     * Lógica:
+     *  1) Valida los datos (cliente, ítems, total, tarifa, pago, y dirección solo si NO es recojo).
+     *  2) Consolida los ítems por producto: si el mismo producto vino en dos filas, suma sus
+     *     cantidades. Esto evita romper la clave primaria de Pedido_Producto (producto+pedido).
+     *  3) Arma el objeto Pedido con el patrón Builder.
+     *  4) Delega en VentaRepository, que en UNA transacción inserta el pedido, sus ítems y
+     *     descuenta el stock; devuelve los productos que quedaron en 0 para avisar.
+     *
+     * @return nombres de productos cuyo stock llegó a 0 (para sugerir reabastecer).
+     */
     public List<String> generarPedido(
             Cliente cliente,
             List<ItemVenta> items,
@@ -129,6 +147,13 @@ public class PedidoController {
         return false;
     }
 
+    /**
+     * Asigna un repartidor a un pedido y lo pone "EN CAMINO".
+     *
+     * Lógica: se ejecuta de forma ASÍNCRONA (CompletableFuture) para no congelar la ventana
+     * mientras se actualiza la base. Además del estado, calcula la hora estimada de entrega
+     * sumando el tiempo promedio de la zona/tarifa, y marca la hora de despacho.
+     */
     public void asignarRepartidor(String codPedido, String codRepartidor) {
         if (codPedido == null || codPedido.trim().isEmpty()) {
             throw new ValidationException("El código del pedido no puede estar vacío.");
@@ -137,7 +162,7 @@ public class PedidoController {
             throw new ValidationException("El código del repartidor no puede estar vacío.");
         }
 
-        // Mantener comportamiento asíncrono, pero sin Service.
+        // Se corre en segundo plano para no bloquear la interfaz (la UI sigue respondiendo).
         CompletableFuture.runAsync(() -> {
             // 1) Actualizar estado y datos del pedido en BD si aplica.
             Pedido pedido = pedidoRepository.findById(codPedido)
@@ -175,6 +200,16 @@ public class PedidoController {
         });
     }
 
+    /**
+     * Cambia el estado de un pedido y ajusta el stock según corresponda.
+     *
+     * Lógica clave: el stock se descontó al generar el pedido, así que la cancelación debe
+     * DEVOLVERLO y la reactivación volver a descontarlo. Por eso se compara el estado anterior
+     * con el nuevo y se decide:
+     *  - Activo → CANCELADO  : se repone el stock de los productos del pedido.
+     *  - CANCELADO → activo  : se vuelve a descontar (validando que alcance).
+     *  - Cualquier otro cambio: solo se actualiza el estado.
+     */
     public void actualizarEstadoPedido(String codPedido, String nuevoEstado) {
         if (codPedido == null || codPedido.trim().isEmpty()) {
             throw new ValidationException("Debe seleccionar un pedido válido.");
@@ -189,6 +224,7 @@ public class PedidoController {
         Pedido pedido = pedidoRepository.findById(cod)
                 .orElseThrow(() -> new ValidationException("No existe Pedido con codPedido=" + cod));
 
+        // Detecta si el cambio cruza el límite "CANCELADO" en uno u otro sentido.
         String estadoAnterior = pedido.getEstado() == null ? "" : pedido.getEstado().trim();
         boolean eraCancelado = estadoAnterior.equalsIgnoreCase("CANCELADO");
         boolean seraCancelado = nuevo.equalsIgnoreCase("CANCELADO");

@@ -14,7 +14,14 @@ import java.util.Map;
 
 
 /**
- * API simple (Javalin) para que un repartidor/empleado externo vea sus pedidos.
+ * API REST (con Javalin) pensada para el REPARTIDOR: desde el celular/navegador puede ver
+ * los pedidos que tiene asignados y marcarlos como entregados. Es la "otra cara" del sistema,
+ * separada de la app de escritorio Swing.
+ *
+ * Expone:
+ *  - GET  /repartidor                                        → sirve la página web (HTML).
+ *  - GET  /api/repartidores/{cod}/pedidos                    → pedidos EN CAMINO de ese repartidor.
+ *  - POST /api/repartidores/{cod}/pedidos/{codPedido}/entregar → marca un pedido como ENTREGADO.
  */
 public class ApiRepartidor {
 
@@ -49,7 +56,9 @@ public class ApiRepartidor {
         app.get("/", ctx -> ctx.redirect("/repartidor"));
 
 
-        // GET: pedidos asignados a un repartidor (incluye dirección textual y cliente)
+        // GET: pedidos asignados a un repartidor.
+        // Lógica: valida el código, busca el nombre del repartidor (404 si no existe) y
+        // devuelve en JSON sus pedidos EN CAMINO (con dirección y cliente) + el saludo.
         app.get("/api/repartidores/{codRepartidor}/pedidos", ctx -> {
             String codRepartidor = ctx.pathParam("codRepartidor");
             if (codRepartidor == null || codRepartidor.trim().isEmpty()) {

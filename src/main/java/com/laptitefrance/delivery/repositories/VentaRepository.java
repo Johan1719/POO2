@@ -15,8 +15,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Operaciones de venta que tocan varias tablas (Pedido, Pedido_Producto, Producto)
- * dentro de una sola transacción.
+ * Repositorio de VENTA: agrupa las operaciones que tocan varias tablas a la vez
+ * (Pedido, Pedido_Producto y Producto) y necesitan ser ATÓMICAS.
+ *
+ * ¿Por qué una clase aparte? Porque cada repositorio normal abre su propia conexión, y aquí
+ * necesitamos que el insert del pedido, el de sus ítems y el descuento de stock ocurran en
+ * UNA sola transacción: si algo falla, se deshace todo (rollback) y no queda un pedido "a
+ * medias" ni stock corrupto.
  */
 public class VentaRepository {
 

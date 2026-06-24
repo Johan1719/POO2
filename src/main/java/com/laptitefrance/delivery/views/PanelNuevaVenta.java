@@ -223,6 +223,13 @@ public class PanelNuevaVenta extends JPanel {
         }
     }
 
+    /**
+     * Agrega el producto seleccionado del menú al carrito, pidiendo la cantidad.
+     *
+     * Lógica de control de stock: valida la cantidad contra el stock DISPONIBLE, que es el
+     * stock del menú menos lo que ya se cargó de ese mismo producto en el carrito. Si no
+     * alcanza, avisa y no agrega la fila (feedback inmediato, antes de generar el pedido).
+     */
     private void agregarAlCarrito() {
         int fila = tablaMenu.getSelectedRow();
         if (fila == -1) {
@@ -296,6 +303,18 @@ public class PanelNuevaVenta extends JPanel {
         lblTotal.setText(String.format("   Total: S/ %.2f   ", totalCarrito));
     }
 
+    /**
+     * Checkout: arma y registra el pedido a partir del carrito. Flujo en dos pasos:
+     *
+     *  Paso 1 — Modalidad: pregunta "Recojo en tienda" o "Delivery a domicilio".
+     *  Paso 2 — Datos según modalidad:
+     *      · Recojo  → elige punto de recojo (tarifa con precio 0); NO pide dirección.
+     *      · Delivery → pide dirección + zona, y muestra en vivo "Productos + Envío = TOTAL".
+     *
+     *  Luego calcula el monto total (productos + costo de envío), arma la lista de ítems del
+     *  carrito y se la pasa al controlador, que descuenta stock y persiste todo. Si algún
+     *  producto queda en 0, muestra el aviso de reabastecimiento.
+     */
     private void generarPedido() {
         try {
             if (clienteSeleccionado == null) {
