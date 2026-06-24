@@ -50,7 +50,7 @@ public class PanelMonitorPedidos extends JPanel {
 
         panelNorte.add(new JLabel("Estado del Pedido:"));
         
-        cbxFiltroEstado = new JComboBox<>(new String[]{"TODOS", "EN ESPERA", "EN CAMINO", "ENTREGADO"});
+        cbxFiltroEstado = new JComboBox<>(new String[]{"TODOS", "EN ESPERA", "EN CAMINO", "ENTREGADO", "CANCELADO"});
 
         panelNorte.add(cbxFiltroEstado);
 
