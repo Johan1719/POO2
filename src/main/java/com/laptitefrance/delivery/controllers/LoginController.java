@@ -1,5 +1,6 @@
 package com.laptitefrance.delivery.controllers;
 
+import com.laptitefrance.delivery.audit.RegistroAccesos;
 import com.laptitefrance.delivery.exceptions.NotFoundException;
 import com.laptitefrance.delivery.exceptions.ValidationException;
 import com.laptitefrance.delivery.models.Empleado;
@@ -26,14 +27,17 @@ public class LoginController {
     public Empleado login(String codigoEmpleado) {
         String codigo = codigoEmpleado == null ? "" : codigoEmpleado.trim();
         if (codigo.isEmpty()) {
+            RegistroAccesos.registrarFallo(codigo, "Codigo vacio");
             throw new ValidationException("Por favor, ingrese un código.");
         }
 
         Optional<Empleado> empleado = empleadoRepository.findById(codigo);
         if (empleado.isEmpty()) {
+            RegistroAccesos.registrarFallo(codigo, "Codigo no existe");
             throw new NotFoundException("Código de empleado no existe en la base de datos.");
         }
 
+        RegistroAccesos.registrarExito(codigo, empleado.get().getNombre());
         return empleado.get();
     }
 }
