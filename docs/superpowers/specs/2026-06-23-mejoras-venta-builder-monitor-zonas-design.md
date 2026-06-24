@@ -15,6 +15,8 @@ Cinco mejoras pedidas sobre el sistema de delivery "La P'tite France" (POO2):
 4. El filtro de estado del monitor no incluye `CANCELADO`.
 5. Las zonas de delivery se llaman `Huaral Centro` / `Alrededores Huaral`; deben ser
    `Lima Metropolitana` / `Callao`.
+6. No hay forma de vaciar el carrito completo para empezar de cero; solo se puede quitar
+   ítem por ítem. Falta un botón "Vaciar carrito".
 
 ## Decisiones tomadas
 
@@ -67,6 +69,13 @@ la fila.
 `PanelMonitorPedidos` línea ~53: agregar `"CANCELADO"` al arreglo del `cbxFiltroEstado`
 (`{"TODOS", "EN ESPERA", "EN CAMINO", "ENTREGADO", "CANCELADO"}`). El filtrado por estado ya es
 genérico (compara el string de estado), así que no requiere más cambios.
+
+### 6. Botón "Vaciar carrito"
+
+`PanelNuevaVenta`: agregar un botón "🗑 Vaciar Carrito" junto a los del carrito que borre
+todas las filas de `modeloCarrito`, ponga `totalCarrito = 0` y refresque el total. Permite
+re-elegir productos desde cero sin quitar uno por uno. (No toca el cliente seleccionado ni el
+menú.)
 
 ### 5. Renombre de zonas de delivery
 

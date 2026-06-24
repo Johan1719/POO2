@@ -428,9 +428,60 @@ git commit -m "chore: renombrar zonas de delivery a Lima Metropolitana y Callao"
 
 ---
 
+### Task 6: Botón "Vaciar Carrito"
+
+**Files:**
+- Modify: `src/main/java/com/laptitefrance/delivery/views/PanelNuevaVenta.java`
+
+**Interfaces:**
+- Consumes: `modeloCarrito`, `totalCarrito`, `actualizarTotal()`.
+
+- [ ] **Step 1: Agregar el botón en el panel del carrito**
+
+En `inicializarComponentes()`, en el `panelTotal` (donde está "❌ Quitar del Carrito"), después de agregar `btnQuitar`, insertar:
+
+```java
+        JButton btnVaciar = new JButton("🗑 Vaciar Carrito");
+        btnVaciar.addActionListener(e -> vaciarCarrito());
+        panelTotal.add(btnVaciar);
+```
+
+- [ ] **Step 2: Agregar el método `vaciarCarrito`**
+
+Junto a `quitarDelCarrito()`, agregar:
+
+```java
+    private void vaciarCarrito() {
+        if (modeloCarrito.getRowCount() == 0) {
+            return;
+        }
+        modeloCarrito.setRowCount(0);
+        totalCarrito = 0.0;
+        actualizarTotal();
+    }
+```
+
+- [ ] **Step 3: Compilar en el IDE**
+
+Esperado: compila sin errores.
+
+- [ ] **Step 4: Verificación manual**
+
+Correr `MainAll`, Nueva Venta. Agregar varios productos al carrito. Tocar "🗑 Vaciar Carrito" → el carrito queda vacío y el total en S/ 0.00; se pueden volver a elegir productos desde cero.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/main/java/com/laptitefrance/delivery/views/PanelNuevaVenta.java
+git commit -m "feat: boton Vaciar Carrito para reiniciar el pedido"
+```
+
+---
+
 ## Self-Review
 
 - **Cobertura del spec:**
+  - Botón Vaciar Carrito (empezar de 0): Task 6. ✅
   - Alerta de stock al agregar (considerando carrito): Task 2. ✅
   - Total con delivery visible (label en vivo) y guardado (montoPedido = productos + envío): Task 3. ✅
   - PedidoBuilder en archivo aparte + uso en controlador + quitar Builder anidado: Task 1. ✅
